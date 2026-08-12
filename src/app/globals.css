@@ -1,0 +1,456 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Eden Kindred — design tokens
+   Rationale in DESIGN.md. Contrast ratios below are measured, not estimated.
+   Re-verify with scripts/check-contrast.mjs if you change a value.
+
+   TWO TOKEN SETS live here, on purpose:
+
+   1. `--brand-*` — the public site (brand register). Oxblood-committed,
+      image-led, light-only.
+   2. shadcn's semantic set (`--primary`, `--muted`, `--card`, …) — the admin
+      console (product register). These are mapped ONTO the brand below so the
+      two surfaces read as one system.
+
+   The brand set is namespaced because `shadcn init` writes the unprefixed
+   names and will silently overwrite anything sitting on them. It did exactly
+   that once already.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Brand palette ──────────────────────────────────────────────────
+     Strategy: Committed. Oxblood carries ~40% of surface area in drenched
+     fields. Background stays pure white — putting warmth in both the brand
+     colour AND the surface is the tell we're avoiding, and white is also
+     the readable ground outdoors on a phone. */
+
+  --brand-bg: oklch(1 0 0);                 /* #ffffff */
+  --brand-surface: oklch(0.968 0.005 20);   /* #f8f3f3 */
+  --brand-surface-2: oklch(0.94 0.008 20);
+  --brand-ink: oklch(0.2 0.018 20);         /* #1e1313 — 18.18:1 on bg */
+  --brand-quiet: oklch(0.5 0.016 20);       /* #6c605f —  6.05:1 on bg */
+  --brand: oklch(0.38 0.145 12);            /* #7d092d — oxblood       */
+  --brand-hover: oklch(0.33 0.14 12);
+  --brand-accent: oklch(0.52 0.115 252);    /* #316ba9 — printer's blue */
+  --chalk: oklch(0.97 0.008 40);            /* #faf3f1 — on oxblood, 9.89:1 */
+  --hairline: oklch(0.88 0.008 20);
+
+  --brand-success: oklch(0.5 0.11 150);
+  --brand-warning: oklch(0.62 0.13 75);
+
+  /* ── Type ───────────────────────────────────────────────────────────
+     Alegreya (humanist book serif) against Schibsted Grotesk (newspaper
+     grotesque) — a real contrast axis, not two similar sans faces. */
+
+  --font-display: var(--font-alegreya), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+
+  /* 1.28 modular scale, fluid where it earns it */
+  --step--1: clamp(0.83rem, 0.8rem + 0.15vw, 0.9rem);
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.09rem);
+  --step-1: clamp(1.28rem, 1.2rem + 0.4vw, 1.4rem);
+  --step-2: clamp(1.64rem, 1.5rem + 0.7vw, 1.8rem);
+  --step-3: clamp(2.1rem, 1.85rem + 1.2vw, 2.3rem);
+  --step-4: clamp(2.69rem, 2.2rem + 2.4vw, 3.4rem);
+  --step-5: clamp(3.2rem, 2.4rem + 4vw, 5.5rem);   /* display ceiling */
+
+  /* ── Space ──────────────────────────────────────────────────────────
+     Varied deliberately: sections breathe, groups stay tight. */
+  --space-section: clamp(4.5rem, 3rem + 7vw, 9rem);
+  --space-block: clamp(2rem, 1.4rem + 3vw, 3.5rem);
+  --gutter: clamp(1.25rem, 0.9rem + 1.8vw, 2.5rem);
+  --measure: 68ch;
+  --shell: 78rem;
+
+  /* ── Depth ──────────────────────────────────────────────────────────
+     Semantic scale. Never write an arbitrary 999. */
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-backdrop: 30;
+  --z-modal: 40;
+  --z-toast: 50;
+  --z-tooltip: 60;
+
+  /* ── Motion ─────────────────────────────────────────────────────────
+     Exponential ease-out throughout. No bounce, no elastic. */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 180ms;
+  --dur-base: 380ms;
+  --dur-slow: 720ms;
+
+  /* ── shadcn semantic set (admin console) ────────────────────────────
+     Mapped onto the brand rather than left at shadcn's neutral defaults.
+     The admin is quieter than the public site by design: oxblood appears
+     only on primary and destructive actions. */
+
+  --radius: 3px; /* near-square — this brand is set, not styled */
+
+  --background: var(--brand-bg);
+  --foreground: var(--brand-ink);
+  --card: var(--brand-bg);
+  --card-foreground: var(--brand-ink);
+  --popover: var(--brand-bg);
+  --popover-foreground: var(--brand-ink);
+
+  --primary: var(--brand);
+  --primary-foreground: var(--chalk);
+  --secondary: var(--brand-surface);
+  --secondary-foreground: var(--brand-ink);
+
+  --muted: var(--brand-surface);
+  --muted-foreground: var(--brand-quiet);
+  --accent: var(--brand-surface-2);
+  --accent-foreground: var(--brand-ink);
+
+  --destructive: oklch(0.48 0.19 26);
+  --border: var(--hairline);
+  --input: var(--hairline);
+  --ring: var(--brand-accent);
+
+  /* Data viz: a single-hue oxblood ramp, plus the accent for contrast
+     series. Ordered light-to-dark so adjacent series stay distinguishable. */
+  --chart-1: oklch(0.38 0.145 12);
+  --chart-2: oklch(0.52 0.115 252);
+  --chart-3: oklch(0.58 0.12 30);
+  --chart-4: oklch(0.7 0.09 60);
+  --chart-5: oklch(0.5 0.016 20);
+
+  --sidebar: var(--brand-surface);
+  --sidebar-foreground: var(--brand-ink);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--chalk);
+  --sidebar-accent: var(--brand-surface-2);
+  --sidebar-accent-foreground: var(--brand-ink);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--brand-accent);
+}
+
+/* The PUBLIC site is light-only, deliberately. This dark set exists for the
+   admin console, where a late-night editing session is a real scenario. */
+.dark {
+  --background: oklch(0.16 0.008 20);
+  --foreground: oklch(0.96 0.005 40);
+  --card: oklch(0.2 0.01 20);
+  --card-foreground: oklch(0.96 0.005 40);
+  --popover: oklch(0.2 0.01 20);
+  --popover-foreground: oklch(0.96 0.005 40);
+
+  /* Oxblood at L 0.38 is too dark to read against a dark ground; lift it. */
+  --primary: oklch(0.62 0.15 14);
+  --primary-foreground: oklch(0.16 0.008 20);
+  --secondary: oklch(0.26 0.012 20);
+  --secondary-foreground: oklch(0.96 0.005 40);
+
+  --muted: oklch(0.26 0.012 20);
+  --muted-foreground: oklch(0.72 0.012 30);
+  --accent: oklch(0.28 0.014 20);
+  --accent-foreground: oklch(0.96 0.005 40);
+
+  --destructive: oklch(0.65 0.19 26);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.68 0.11 252);
+
+  --chart-1: oklch(0.62 0.15 14);
+  --chart-2: oklch(0.68 0.11 252);
+  --chart-3: oklch(0.72 0.11 40);
+  --chart-4: oklch(0.78 0.09 70);
+  --chart-5: oklch(0.72 0.012 30);
+
+  --sidebar: oklch(0.2 0.01 20);
+  --sidebar-foreground: oklch(0.96 0.005 40);
+  --sidebar-primary: oklch(0.62 0.15 14);
+  --sidebar-primary-foreground: oklch(0.16 0.008 20);
+  --sidebar-accent: oklch(0.28 0.014 20);
+  --sidebar-accent-foreground: oklch(0.96 0.005 40);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.68 0.11 252);
+}
+
+@theme inline {
+  /* Brand utilities: bg-brand, text-ink, text-quiet, border-hairline, … */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-bg: var(--brand-bg);
+  --color-surface: var(--brand-surface);
+  --color-surface-2: var(--brand-surface-2);
+  --color-ink: var(--brand-ink);
+  --color-quiet: var(--brand-quiet);
+  --color-chalk: var(--chalk);
+  --color-hairline: var(--hairline);
+  --color-brand-success: var(--brand-success);
+  --color-brand-warning: var(--brand-warning);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-sans: var(--font-body);
+
+  --text-step--1: var(--step--1);
+  --text-step-0: var(--step-0);
+  --text-step-1: var(--step-1);
+  --text-step-2: var(--step-2);
+  --text-step-3: var(--step-3);
+  --text-step-4: var(--step-4);
+  --text-step-5: var(--step-5);
+
+  --ease-brand: var(--ease-out-quart);
+  --ease-brand-expo: var(--ease-out-expo);
+
+  /* shadcn utilities */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+/* ── Base ────────────────────────────────────────────────────────────── */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: -0.025em; /* floor is -0.03em; never tighter */
+  text-wrap: balance;
+}
+
+h4,
+h5,
+h6 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
+/* The brand's one typographic device, borrowed from the reference template:
+   italic emphasis inside a heading. Scoped to headings so it stays a device
+   rather than decoration sprinkled about. */
+h1 em,
+h2 em,
+h3 em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
+img,
+picture,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+::selection {
+  background: var(--brand);
+  color: var(--chalk);
+}
+
+::placeholder {
+  color: var(--brand-quiet); /* 6.05:1 — not the washed-out default */
+  opacity: 1;
+}
+
+/* ── Layout helpers ──────────────────────────────────────────────────── */
+
+.shell {
+  width: 100%;
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.measure {
+  max-width: var(--measure);
+}
+
+.section {
+  padding-block: var(--space-section);
+}
+
+/* Drenched field — the Committed strategy in practice. */
+.on-brand {
+  background: var(--brand);
+  color: var(--chalk);
+}
+
+.on-brand :where(h1, h2, h3, h4) {
+  color: var(--chalk);
+}
+
+/* Blue focus rings vanish against oxblood. */
+.on-brand :where(a, button, input, [tabindex]):focus-visible {
+  outline-color: var(--chalk);
+}
+
+.on-brand .quiet-text {
+  color: color-mix(in oklch, var(--chalk) 74%, var(--brand));
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────── */
+
+/* Reveals ENHANCE an already-visible default. Content is never gated behind a
+   scroll trigger — a headless render or a background tab would otherwise ship
+   the section blank. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Split-word heading reveal ────────────────────────────────────────────
+   The reference site's signature move: each word lifts and fades in, staggered.
+
+   Driven by CSS rather than one motion component per word — a ten-word heading
+   would otherwise mount ten React animation nodes, which is real cost on the
+   mid-range Android this audience actually uses. One IntersectionObserver per
+   heading flips a single attribute; the GPU does the rest.
+
+   The hidden start state lives behind `html.js`, which an inline script in the
+   root layout sets before first paint. Without JavaScript the class never
+   arrives and the words simply render visible — the reveal enhances a
+   readable default instead of gating it. */
+
+.split-word {
+  display: inline-block;
+  white-space: pre;
+}
+
+html.js .split-word {
+  opacity: 0;
+  transform: translateY(0.5em);
+}
+
+html.js [data-revealed="true"] .split-word {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.62s var(--ease-out-expo) calc(var(--i, 0) * 55ms),
+    transform 0.62s var(--ease-out-expo) calc(var(--i, 0) * 55ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .split-word {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ── Sticky scene stack ──────────────────────────────────────────────────
+   Children stick at the top of a tall parent, so each scene holds while the
+   next slides over it. Pure CSS: no scroll listener, no pin-spacer, and it
+   keeps working when JavaScript doesn't. */
+
+.scene-stack > .scene {
+  position: sticky;
+  top: 0;
+  min-height: 100svh;
+}
+
+/* Lenis mounts only on pointer-fine, motion-safe viewports. The guard lives in
+   src/components/smooth-scroll.tsx; these rules only matter when it is on. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}

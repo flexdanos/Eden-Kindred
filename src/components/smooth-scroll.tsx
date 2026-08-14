@@ -4,21 +4,24 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 
 /**
- * Smooth scroll — desktop enhancement only.
+ * Smooth scroll, mounted at every viewport width.
  *
- * Deliberately NOT mounted when:
- *  - the pointer is coarse or the viewport is narrow. Native scroll on a
- *    mid-range Android is smoother and cheaper than anything JS can do, and
- *    hijacking it there costs battery for a worse result.
- *  - the visitor asked for reduced motion.
+ * It used to be gated to wide, pointer-fine screens. That was over-cautious:
+ * Lenis only intercepts WHEEL events by default, so on a phone it is inert
+ * anyway — the narrow-screen gate bought nothing and cost the effect on
+ * laptops in a narrowed window.
  *
- * Both conditions are re-evaluated on resize and on preference change, so a
- * desktop window narrowed to phone width tears the instance down properly.
+ * Touch stays on the platform's own momentum physics (`syncTouch: false`).
+ * That is the one line here worth defending: smoothing touch replaces scroll
+ * behaviour a phone user already has muscle memory for with something that
+ * feels laggy, and it burns battery to do it.
+ *
+ * Reduced motion tears the instance down entirely, and the preference is
+ * re-evaluated if it changes mid-session.
  */
 export function SmoothScroll() {
   useEffect(() => {
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const desktopQuery = window.matchMedia("(min-width: 1024px) and (pointer: fine)");
 
     let lenis: Lenis | null = null;
     let frame = 0;
@@ -30,6 +33,12 @@ export function SmoothScroll() {
         // Exponential ease-out. No overshoot, no bounce.
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         smoothWheel: true,
+        // Touch is left on the platform's own momentum scrolling. Lenis does
+        // not smooth touch by default and it should stay that way — hijacking
+        // a phone's native scroll physics feels worse than the thing it
+        // replaces and costs battery. The reference site runs Lenis globally
+        // on the same terms.
+        syncTouch: false,
         touchMultiplier: 1,
       });
 
@@ -47,17 +56,15 @@ export function SmoothScroll() {
     };
 
     const sync = () => {
-      if (desktopQuery.matches && !motionQuery.matches) start();
-      else stop();
+      if (motionQuery.matches) stop();
+      else start();
     };
 
     sync();
     motionQuery.addEventListener("change", sync);
-    desktopQuery.addEventListener("change", sync);
 
     return () => {
       motionQuery.removeEventListener("change", sync);
-      desktopQuery.removeEventListener("change", sync);
       stop();
     };
   }, []);

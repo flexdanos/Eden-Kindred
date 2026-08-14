@@ -14,10 +14,55 @@ export type SessionUser = {
   fullName: string | null;
   avatarUrl: string | null;
   role: Role;
+  isTeamMember: boolean;
+  instrument: string | null;
 };
+
+/**
+ * DEVELOPMENT-ONLY preview identity.
+ *
+ * The admin is gated on a Supabase session, and the first admin is made by
+ * promoting a real profile row — which is impossible before a database exists.
+ * That leaves the admin UI unviewable during early local work, so this opens it
+ * when BOTH conditions hold:
+ *
+ *   1. NODE_ENV is not "production" — a production build can never satisfy this,
+ *      whatever the environment variables say.
+ *   2. ADMIN_DEV_BYPASS is exactly "true" — opt-in, never a default.
+ *
+ * Two independent guards on purpose: one of them being wrong should not be
+ * enough. Vercel sets NODE_ENV=production on every deployment, so even shipping
+ * the variable by mistake cannot unlock a live site.
+ *
+ * READ-ONLY IN PRACTICE. The returned id belongs to no profiles row, so any
+ * write referencing it (a post's author, a block's editor) fails the foreign
+ * key. That is the intended limit: this is for looking at the interface, not
+ * operating it. Delete the variable once you can sign in for real.
+ */
+function devPreviewUser(): SessionUser | null {
+  if (process.env.NODE_ENV === "production") return null;
+  if (process.env.ADMIN_DEV_BYPASS !== "true") return null;
+
+  console.warn(
+    "[auth] ADMIN_DEV_BYPASS is on — admin routes are UNAUTHENTICATED. Development only.",
+  );
+
+  return {
+    id: "00000000-0000-0000-0000-000000000000",
+    email: "preview@localhost",
+    fullName: "Preview (no auth)",
+    avatarUrl: null,
+    role: "admin",
+    isTeamMember: true,
+    instrument: null,
+  };
+}
 
 /** The signed-in user with their profile row, or null. */
 export async function getSessionUser(): Promise<SessionUser | null> {
+  const preview = devPreviewUser();
+  if (preview) return preview;
+
   const supabase = await createClient();
 
   // getUser() revalidates the JWT against Supabase. getSession() only reads the
@@ -33,6 +78,8 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       fullName: profiles.fullName,
       avatarUrl: profiles.avatarUrl,
       role: profiles.role,
+      isTeamMember: profiles.isTeamMember,
+      instrument: profiles.instrument,
     })
     .from(profiles)
     .where(eq(profiles.id, user.id))
@@ -44,7 +91,25 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     fullName: profile?.fullName ?? null,
     avatarUrl: profile?.avatarUrl ?? null,
     role: (profile?.role as Role) ?? "member",
+    isTeamMember: profile?.isTeamMember ?? false,
+    instrument: profile?.instrument ?? null,
   };
+}
+
+/**
+ * Gate for the musicians' area.
+ *
+ * Staff get in automatically — someone who can edit the whole site being
+ * locked out of the rehearsal notes would be theatre, not security.
+ */
+export async function assertTeamMember(): Promise<SessionUser> {
+  const user = await getSessionUser();
+  if (!user) redirect("/login?next=/team");
+
+  const allowed = user.isTeamMember || user.role === "admin" || user.role === "editor";
+  if (!allowed) redirect("/?denied=team");
+
+  return user;
 }
 
 /**

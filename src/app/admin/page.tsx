@@ -60,20 +60,30 @@ export default async function AdminDashboard() {
     { label: "Pledged monthly", value: formatMinor(totals.pledgedMonthlyMinor) },
     { label: "Active partners", value: String(totals.activePartners) },
     { label: "Gifts this month", value: String(totals.giftsThisMonth) },
+    // Both were already queried by getDashboardTotals and thrown away. On a
+    // narrow screen they wrap to a second row; past 2xl the whole set is one
+    // line, which is the point of the wider grid.
+    { label: "Received all time", value: formatMinor(totals.receivedAllTimeMinor) },
+    { label: "Missed pledges", value: String(totals.missedPeriods) },
   ];
 
   const drafts = counts.posts.drafts + counts.events.drafts + counts.blocks.drafts;
 
   return (
-    <div className="max-w-6xl">
+    <div className="max-w-6xl 2xl:max-w-none">
       <header className="mb-7">
         <h1 className="m-0 text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="m-0 mt-1 text-sm text-muted-foreground">
-          Giving and content at a glance. All amounts in Ghana cedis.
+          Giving and content at a glance. Amounts as received.
         </p>
       </header>
 
-      <section aria-label="Key figures" className="grid gap-px bg-border border border-border sm:grid-cols-2 lg:grid-cols-4">
+      {/* Six across on the widest screens — the two extra figures were already
+          being computed and were previously hidden behind a four-column cap. */}
+      <section
+        aria-label="Key figures"
+        className="grid gap-px bg-border border border-border sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-6"
+      >
         {stats.map((stat) => (
           <div key={stat.label} className="bg-background p-4">
             <p className="m-0 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -84,8 +94,17 @@ export default async function AdminDashboard() {
         ))}
       </section>
 
+      {/*
+        Past 2xl these three stop stacking and sit in two columns: the gifts
+        table takes the wide side, the two summary panels share the narrow one.
+
+        Placement is explicit (col-start / row-start) rather than DOM reordering
+        so the source order stays the reading order — pledged-vs-received first,
+        which is the number that matters most on a phone.
+      */}
+      <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] 2xl:items-start">
       {/* Pledged vs received */}
-      <section className="mt-6 border border-border p-5">
+      <section className="mt-6 border border-border p-5 2xl:mt-0 2xl:col-start-2 2xl:row-start-1">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="m-0 text-base font-semibold">This month against pledges</h2>
           {fulfilment !== null && (
@@ -136,8 +155,9 @@ export default async function AdminDashboard() {
         )}
       </section>
 
-      {/* Recent donations */}
-      <section className="mt-6">
+      {/* Recent donations — the wide column, spanning both rows so the panels
+          beside it stack against it rather than stretching to match. */}
+      <section className="mt-6 2xl:mt-0 2xl:col-start-1 2xl:row-start-1 2xl:row-span-2">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="m-0 text-base font-semibold">Recent gifts</h2>
           <Link
@@ -199,7 +219,7 @@ export default async function AdminDashboard() {
       </section>
 
       {drafts > 0 && (
-        <section className="mt-6 border border-border p-5">
+        <section className="mt-6 border border-border p-5 2xl:mt-0 2xl:col-start-2 2xl:row-start-2">
           <h2 className="m-0 text-base font-semibold">Unpublished</h2>
           <p className="m-0 mt-1.5 text-sm text-muted-foreground">
             {drafts} {drafts === 1 ? "item is" : "items are"} saved but not visible on the
@@ -224,6 +244,7 @@ export default async function AdminDashboard() {
           </div>
         </section>
       )}
+      </div>
     </div>
   );
 }

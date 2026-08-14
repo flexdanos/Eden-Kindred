@@ -53,6 +53,38 @@ export const pledgePeriodStatusEnum = pgEnum("pledge_period_status", [
   "waived",
 ]);
 
+export const releaseTypeEnum = pgEnum("release_type", [
+  "album",
+  "ep",
+  "single",
+  "live_session",
+]);
+
+export const teamResourceKindEnum = pgEnum("team_resource_kind", [
+  "chord_chart",
+  "rehearsal_audio",
+  "setlist",
+  "note",
+]);
+
+/**
+ * How a gift reached us.
+ *
+ * `paystack` is the only automated rail — it verifies and writes itself.
+ * The rest are MANUAL: Zelle is US bank-to-bank with no merchant API at all,
+ * Cash App needs a Square/Stripe merchant account, and a bank transfer is a
+ * bank transfer. For those, someone reads a statement and records the gift in
+ * the admin. Keeping them in the same table is what stops the dashboard from
+ * quietly understating income.
+ */
+export const paymentProviderEnum = pgEnum("payment_provider", [
+  "paystack",
+  "bank_transfer",
+  "zelle",
+  "cash_app",
+  "other",
+]);
+
 // ── Profiles (mirrors auth.users, public-schema subset) ────────────────────
 
 export const profiles = pgTable("profiles", {
@@ -62,6 +94,15 @@ export const profiles = pgTable("profiles", {
   avatarUrl: text("avatar_url"),
   phone: text("phone"),
   role: roleEnum("role").notNull().default("member"),
+  /**
+   * Gates the musicians' area. Deliberately a flag rather than another value on
+   * `role`: playing in the band and having permission to edit the website are
+   * unrelated facts, and folding them into one column would force a choice
+   * between "musician who can't be an editor" and widening the enum every time
+   * a new kind of person appears.
+   */
+  isTeamMember: boolean("is_team_member").notNull().default(false),
+  instrument: text("instrument"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -223,9 +264,17 @@ export const donations = pgTable(
     type: donationTypeEnum("type").notNull().default("one_time"),
     status: donationStatusEnum("status").notNull().default("pending"),
 
-    provider: text("provider").notNull().default("paystack"),
-    // Paystack's `reference`. Unique, so a replayed webhook cannot double-write.
+    provider: paymentProviderEnum("provider").notNull().default("paystack"),
+    /**
+     * Paystack's `reference` for automated gifts; for manual rails, whatever
+     * identifies it on the statement (a transfer reference, a Zelle
+     * confirmation). Unique per provider, so a replayed webhook cannot
+     * double-write and an admin cannot record the same bank transfer twice.
+     */
     providerReference: text("provider_reference").notNull(),
+    /** Set when a person entered this gift by hand rather than a webhook. */
+    recordedBy: uuid("recorded_by").references(() => profiles.id, { onDelete: "set null" }),
+    note: text("note"),
     channel: text("channel"), // 'mobile_money'
     momoNetwork: momoNetworkEnum("momo_network"),
 
@@ -249,6 +298,80 @@ export const donations = pgTable(
     index("donations_status_paid_idx").on(t.status, t.paidAt),
     index("donations_public_display_idx").on(t.isPublicDisplay, t.paidAt),
   ],
+);
+
+// ── Releases ────────────────────────────────────────────────────────────
+// The music the community makes. Streaming links rather than hosted audio:
+// nobody needs another place to store a 40 MB master, and the platforms handle
+// the players, the royalties, and the bandwidth.
+
+export const releases = pgTable(
+  "releases",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    type: releaseTypeEnum("type").notNull().default("single"),
+    description: text("description"),
+    releasedAt: date("released_at"),
+    coverMediaId: uuid("cover_media_id").references(() => mediaAssets.id, {
+      onDelete: "set null",
+    }),
+
+    spotifyUrl: text("spotify_url"),
+    appleMusicUrl: text("apple_music_url"),
+    youtubeUrl: text("youtube_url"),
+    bandcampUrl: text("bandcamp_url"),
+    /**
+     * Embed id only, never a full <iframe> from an admin field — pasted markup
+     * from a text column is a stored-XSS hole. The player is built from this.
+     */
+    youtubeVideoId: text("youtube_video_id"),
+    spotifyEmbedId: text("spotify_embed_id"),
+
+    isPublished: boolean("is_published").notNull().default(false),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("releases_published_idx").on(t.isPublished, t.releasedAt)],
+);
+
+export const releaseTracks = pgTable(
+  "release_tracks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    releaseId: uuid("release_id")
+      .notNull()
+      .references(() => releases.id, { onDelete: "cascade" }),
+    trackNumber: integer("track_number").notNull().default(1),
+    title: text("title").notNull(),
+    durationSeconds: integer("duration_seconds"),
+    writtenBy: text("written_by"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex("release_tracks_order").on(t.releaseId, t.trackNumber)],
+);
+
+// ── Team resources (musicians' area, behind login) ──────────────────────
+
+export const teamResources = pgTable(
+  "team_resources",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    kind: teamResourceKindEnum("kind").notNull().default("note"),
+    body: text("body"),
+    /** Chord chart PDF, rehearsal audio, or similar, in Supabase Storage. */
+    mediaId: uuid("media_id").references(() => mediaAssets.id, { onDelete: "set null" }),
+    externalUrl: text("external_url"),
+    /** Optionally scoped to the gathering it is being prepared for. */
+    eventId: uuid("event_id").references(() => events.id, { onDelete: "set null" }),
+    createdBy: uuid("created_by").references(() => profiles.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("team_resources_event_idx").on(t.eventId, t.createdAt)],
 );
 
 // ── Webhook event log ───────────────────────────────────────────────────
@@ -318,6 +441,24 @@ export const pledgesRelations = relations(pledges, ({ one, many }) => ({
 
 export const pledgePeriodsRelations = relations(pledgePeriods, ({ one }) => ({
   pledge: one(pledges, { fields: [pledgePeriods.pledgeId], references: [pledges.id] }),
+}));
+
+export const releasesRelations = relations(releases, ({ one, many }) => ({
+  coverMedia: one(mediaAssets, {
+    fields: [releases.coverMediaId],
+    references: [mediaAssets.id],
+  }),
+  tracks: many(releaseTracks),
+}));
+
+export const releaseTracksRelations = relations(releaseTracks, ({ one }) => ({
+  release: one(releases, { fields: [releaseTracks.releaseId], references: [releases.id] }),
+}));
+
+export const teamResourcesRelations = relations(teamResources, ({ one }) => ({
+  media: one(mediaAssets, { fields: [teamResources.mediaId], references: [mediaAssets.id] }),
+  event: one(events, { fields: [teamResources.eventId], references: [events.id] }),
+  author: one(profiles, { fields: [teamResources.createdBy], references: [profiles.id] }),
 }));
 
 export const donationsRelations = relations(donations, ({ one }) => ({

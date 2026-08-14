@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, gte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { publicStorageUrl } from "@/lib/storage";
 import {
@@ -10,6 +10,8 @@ import {
   mediaAssets,
   partnershipTiers,
   posts,
+  releaseTracks,
+  releases,
   siteSettings,
 } from "@/lib/db/schema";
 
@@ -115,6 +117,21 @@ export async function getUpcomingEvents(limit = 6) {
     .limit(limit);
 }
 
+/** Gatherings that have already happened, most recent first. */
+export async function getPastEvents(limit = 12) {
+  return db
+    .select({
+      slug: events.slug,
+      title: events.title,
+      location: events.location,
+      startsAt: events.startsAt,
+    })
+    .from(events)
+    .where(and(eq(events.isPublished, true), lt(events.startsAt, new Date())))
+    .orderBy(desc(events.startsAt))
+    .limit(limit);
+}
+
 export async function getEventBySlug(slug: string) {
   const [row] = await db
     .select({
@@ -136,6 +153,75 @@ export async function getEventBySlug(slug: string) {
     .limit(1);
 
   return row ?? null;
+}
+
+// ── Music ────────────────────────────────────────────────────────────────
+
+export async function getPublishedReleases(limit = 50) {
+  return db
+    .select({
+      slug: releases.slug,
+      title: releases.title,
+      type: releases.type,
+      description: releases.description,
+      releasedAt: releases.releasedAt,
+      spotifyUrl: releases.spotifyUrl,
+      appleMusicUrl: releases.appleMusicUrl,
+      youtubeUrl: releases.youtubeUrl,
+      bandcampUrl: releases.bandcampUrl,
+      media: {
+        path: mediaAssets.path,
+        bucket: mediaAssets.bucket,
+        altText: mediaAssets.altText,
+      },
+    })
+    .from(releases)
+    .leftJoin(mediaAssets, eq(releases.coverMediaId, mediaAssets.id))
+    .where(eq(releases.isPublished, true))
+    .orderBy(asc(releases.sortOrder), desc(releases.releasedAt))
+    .limit(limit);
+}
+
+export async function getReleaseBySlug(slug: string) {
+  const [release] = await db
+    .select({
+      id: releases.id,
+      slug: releases.slug,
+      title: releases.title,
+      type: releases.type,
+      description: releases.description,
+      releasedAt: releases.releasedAt,
+      spotifyUrl: releases.spotifyUrl,
+      appleMusicUrl: releases.appleMusicUrl,
+      youtubeUrl: releases.youtubeUrl,
+      bandcampUrl: releases.bandcampUrl,
+      youtubeVideoId: releases.youtubeVideoId,
+      spotifyEmbedId: releases.spotifyEmbedId,
+      media: {
+        path: mediaAssets.path,
+        bucket: mediaAssets.bucket,
+        altText: mediaAssets.altText,
+      },
+    })
+    .from(releases)
+    .leftJoin(mediaAssets, eq(releases.coverMediaId, mediaAssets.id))
+    .where(and(eq(releases.slug, slug), eq(releases.isPublished, true)))
+    .limit(1);
+
+  if (!release) return null;
+
+  const tracks = await db
+    .select({
+      trackNumber: releaseTracks.trackNumber,
+      title: releaseTracks.title,
+      durationSeconds: releaseTracks.durationSeconds,
+      writtenBy: releaseTracks.writtenBy,
+    })
+    .from(releaseTracks)
+    .where(eq(releaseTracks.releaseId, release.id))
+    .orderBy(asc(releaseTracks.trackNumber));
+
+  return { ...release, tracks };
 }
 
 export async function getActiveTiers() {

@@ -6,7 +6,9 @@ import {
   BarChart3,
   CalendarDays,
   Coins,
+  Disc3,
   FileText,
+  Music2,
   HandCoins,
   Image as ImageIcon,
   LayoutTemplate,
@@ -42,8 +44,13 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "/admin/content", label: "Page sections", icon: LayoutTemplate },
       { href: "/admin/posts", label: "Teaching", icon: FileText },
       { href: "/admin/events", label: "Gatherings", icon: CalendarDays },
+      { href: "/admin/releases", label: "Music", icon: Disc3 },
       { href: "/admin/media", label: "Media", icon: ImageIcon },
     ],
+  },
+  {
+    label: "Team",
+    items: [{ href: "/admin/team", label: "Musicians", icon: Music2 }],
   },
   {
     label: "System",
@@ -54,14 +61,20 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
 export function AdminNav() {
   const pathname = usePathname();
 
+  // Horizontal scroller on mobile, sidebar from md up. Stacking ten links
+  // vertically above every admin page pushed the actual content off the first
+  // screen — the nav was taller than the work.
   return (
-    <nav aria-label="Admin" className="flex flex-col gap-6 md:flex-col">
+    <nav
+      aria-label="Admin"
+      className="flex gap-3 overflow-x-auto md:overflow-visible md:flex-col md:gap-6"
+    >
       {GROUPS.map((group) => (
-        <div key={group.label}>
-          <h2 className="px-3 mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div key={group.label} className="flex items-center gap-1 md:block">
+          <h2 className="hidden md:block px-3 mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground">
             {group.label}
           </h2>
-          <ul className="list-none m-0 p-0 flex flex-col gap-0.5">
+          <ul className="list-none m-0 p-0 flex gap-1 md:flex-col md:gap-0.5">
             {group.items.map((item) => {
               const active = item.exact
                 ? pathname === item.href
@@ -74,7 +87,7 @@ export function AdminNav() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     data-active={active}
-                    className="flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm no-underline text-foreground/75 transition-colors duration-150 hover:bg-accent hover:text-foreground data-[active=true]:bg-accent data-[active=true]:text-foreground data-[active=true]:font-medium"
+                    className="flex items-center gap-2.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm no-underline text-foreground/75 transition-colors duration-150 hover:bg-accent hover:text-foreground data-[active=true]:bg-accent data-[active=true]:text-foreground data-[active=true]:font-medium"
                   >
                     <Icon size={15} aria-hidden className="shrink-0" />
                     {item.label}

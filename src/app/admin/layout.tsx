@@ -19,7 +19,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-svh font-body">
-      <aside className="hidden md:flex w-60 shrink-0 flex-col justify-between border-r border-border bg-sidebar p-4">
+      {/* Sidebar widens a step on very large screens. Structural, not fluid:
+          the type stays put and only the column grows, which is the product
+          register's rule and also what stops a 2560px monitor from rendering a
+          nav that looks like a bookmark. */}
+      <aside className="hidden md:flex w-60 2xl:w-72 shrink-0 flex-col justify-between border-r border-border bg-sidebar p-4 2xl:p-5">
         <div>
           <Link href="/admin" className="block px-3 py-2 no-underline">
             <span className="font-display text-lg leading-none">
@@ -75,11 +79,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </form>
         </div>
 
-        <div className="md:hidden border-b border-border bg-sidebar px-4 py-3 overflow-x-auto">
+        {/* AdminNav owns its own horizontal scroll on mobile; a second
+            overflow container here would nest two scrollers. */}
+        <div className="md:hidden border-b border-border bg-sidebar px-4 py-3">
           <AdminNav />
         </div>
 
-        <main className="flex-1 p-5 lg:p-8">{children}</main>
+        <main className="flex-1 p-5 lg:p-8 2xl:p-12">{children}</main>
       </div>
     </div>
   );

@@ -25,8 +25,9 @@ All values OKLCH. Contrast verified numerically, not estimated.
 Verified ratios: ink/bg 18.18 · muted/bg 6.05 · ink/surface 16.54 · chalk/primary 9.89 · white/primary 10.80 · primary/accent 1.96 · accent/bg 5.51.
 
 Usage rules:
-- **Primary** fills CTAs and drenched sections. Text on it is `--chalk` or pure white, never dark.
-- **Accent** is for links, section marks, and small filled pills. Body text never sits on accent — at 5.51:1 against bg it is a safe link colour, but a filled accent surface is reserved for short bold labels.
+- **Primary (oxblood)** fills CTAs and drenched sections, and is also the **link and focus-ring colour**. Text on an oxblood fill is `--chalk` or pure white, never dark. At 10.8:1 on white it is a strong link colour, and using the brand rather than a separate hue keeps links reading as part of the page instead of as browser defaults.
+- **Accent (printer's blue)** is reserved for **data visualisation only** — a second hue so adjacent chart series stay distinguishable. It is deliberately not used for links, focus rings, or UI chrome; a blue link on an oxblood page looks unstyled.
+- Links are distinguished from buttons by underline and weight, not by hue.
 - **No gradients on brand colour.** Flat fields only. A gradient here would land directly in the megachurch anti-reference.
 - The pan-African red-gold-green palette is deliberately avoided; cultural specificity comes from photography, copy, and type.
 

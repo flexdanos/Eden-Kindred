@@ -35,6 +35,10 @@
   --brand-quiet: oklch(0.5 0.016 20);       /* #6c605f —  6.05:1 on bg */
   --brand: oklch(0.38 0.145 12);            /* #7d092d — oxblood       */
   --brand-hover: oklch(0.33 0.14 12);
+  /* Reserved for data visualisation only — a second hue so adjacent chart
+     series stay distinguishable. It is deliberately NOT used for links or
+     focus rings: a blue link on an oxblood page reads as browser default
+     rather than as part of the palette. */
   --brand-accent: oklch(0.52 0.115 252);    /* #316ba9 — printer's blue */
   --chalk: oklch(0.97 0.008 40);            /* #faf3f1 — on oxblood, 9.89:1 */
   --hairline: oklch(0.88 0.008 20);
@@ -110,7 +114,7 @@
   --destructive: oklch(0.48 0.19 26);
   --border: var(--hairline);
   --input: var(--hairline);
-  --ring: var(--brand-accent);
+  --ring: var(--brand);
 
   /* Data viz: a single-hue oxblood ramp, plus the accent for contrast
      series. Ordered light-to-dark so adjacent series stay distinguishable. */
@@ -127,7 +131,7 @@
   --sidebar-accent: var(--brand-surface-2);
   --sidebar-accent-foreground: var(--brand-ink);
   --sidebar-border: var(--hairline);
-  --sidebar-ring: var(--brand-accent);
+  --sidebar-ring: var(--brand);
 }
 
 /* The PUBLIC site is light-only, deliberately. This dark set exists for the
@@ -243,131 +247,151 @@
 
 /* ── Base ────────────────────────────────────────────────────────────── */
 
+/* EVERYTHING below must stay inside a @layer.
+ *
+ * Unlayered CSS outranks every layered rule in the cascade, whatever the
+ * specificity — layer order only sorts rules that are IN layers. Tailwind v4
+ * puts all utilities in `@layer utilities`, so a bare `a { color: inherit }`
+ * silently beats `text-chalk` on every single link. That shipped once: the
+ * "Become a partner" button rendered dark ink on oxblood because the anchor
+ * inherited the card's text colour and the utility never got a say.
+ *
+ * Base element styles go in `@layer base`, class helpers in
+ * `@layer components`. Both are ordered before `utilities`, so a utility can
+ * always override them — which is the whole point of reaching for one.
+ */
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-}
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-html {
-  -webkit-text-size-adjust: 100%;
-  scroll-behavior: smooth;
-}
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-body);
-  font-size: var(--step-0);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    font-size: var(--step-0);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
 
-h1,
-h2,
-h3 {
-  font-family: var(--font-display);
-  font-weight: 500;
-  line-height: 1.06;
-  letter-spacing: -0.025em; /* floor is -0.03em; never tighter */
-  text-wrap: balance;
-}
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 1.06;
+    letter-spacing: -0.025em; /* floor is -0.03em; never tighter */
+    text-wrap: balance;
+  }
 
-h4,
-h5,
-h6 {
-  font-family: var(--font-body);
-  font-weight: 600;
-  line-height: 1.25;
-  text-wrap: balance;
-}
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    line-height: 1.25;
+    text-wrap: balance;
+  }
 
-p,
-li {
-  text-wrap: pretty;
-}
+  p,
+  li {
+    text-wrap: pretty;
+  }
 
-/* The brand's one typographic device, borrowed from the reference template:
-   italic emphasis inside a heading. Scoped to headings so it stays a device
-   rather than decoration sprinkled about. */
-h1 em,
-h2 em,
-h3 em {
-  font-style: italic;
-  font-weight: 400;
-}
+  /* The brand's one typographic device, borrowed from the reference template:
+     italic emphasis inside a heading. Scoped to headings so it stays a device
+     rather than decoration sprinkled about. */
+  h1 em,
+  h2 em,
+  h3 em {
+    font-style: italic;
+    font-weight: 400;
+  }
 
-a {
-  color: inherit;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.2em;
-}
+  a {
+    color: inherit;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
 
-:where(a, button, input, textarea, select, [tabindex]):focus-visible {
-  outline: 2px solid var(--brand-accent);
-  outline-offset: 2px;
-  border-radius: 1px;
-}
+  :where(a, button, input, textarea, select, [tabindex]):focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 1px;
+  }
 
-img,
-picture,
-video {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
+  img,
+  picture,
+  video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
 
-::selection {
-  background: var(--brand);
-  color: var(--chalk);
-}
+  ::selection {
+    background: var(--brand);
+    color: var(--chalk);
+  }
 
-::placeholder {
-  color: var(--brand-quiet); /* 6.05:1 — not the washed-out default */
-  opacity: 1;
+  ::placeholder {
+    color: var(--brand-quiet); /* 6.05:1 — not the washed-out default */
+    opacity: 1;
+  }
 }
 
 /* ── Layout helpers ──────────────────────────────────────────────────── */
 
-.shell {
-  width: 100%;
-  max-width: var(--shell);
-  margin-inline: auto;
-  padding-inline: var(--gutter);
-}
+@layer components {
+  .shell {
+    width: 100%;
+    max-width: var(--shell);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
 
-.measure {
-  max-width: var(--measure);
-}
+  .measure {
+    max-width: var(--measure);
+  }
 
-.section {
-  padding-block: var(--space-section);
-}
+  .section {
+    padding-block: var(--space-section);
+  }
 
-/* Drenched field — the Committed strategy in practice. */
-.on-brand {
-  background: var(--brand);
-  color: var(--chalk);
-}
+  /* Drenched field — the Committed strategy in practice.
+     In `components` rather than unlayered so `bg-transparent` can still win on
+     the hero, where the photograph is the ground and this only supplies the
+     text colour. */
+  .on-brand {
+    background: var(--brand);
+    color: var(--chalk);
+  }
 
-.on-brand :where(h1, h2, h3, h4) {
-  color: var(--chalk);
-}
+  .on-brand :where(h1, h2, h3, h4) {
+    color: var(--chalk);
+  }
 
-/* Blue focus rings vanish against oxblood. */
-.on-brand :where(a, button, input, [tabindex]):focus-visible {
-  outline-color: var(--chalk);
-}
+  /* Blue focus rings vanish against oxblood. */
+  .on-brand :where(a, button, input, [tabindex]):focus-visible {
+    outline-color: var(--chalk);
+  }
 
-.on-brand .quiet-text {
-  color: color-mix(in oklch, var(--chalk) 74%, var(--brand));
+  .on-brand .quiet-text {
+    color: color-mix(in oklch, var(--chalk) 74%, var(--brand));
+  }
 }
 
 /* ── Motion ──────────────────────────────────────────────────────────── */
@@ -403,29 +427,31 @@ video {
    arrives and the words simply render visible — the reveal enhances a
    readable default instead of gating it. */
 
-.split-word {
-  display: inline-block;
-  white-space: pre;
-}
+@layer components {
+  .split-word {
+    display: inline-block;
+    white-space: pre;
+  }
 
-html.js .split-word {
-  opacity: 0;
-  transform: translateY(0.5em);
-}
-
-html.js [data-revealed="true"] .split-word {
-  opacity: 1;
-  transform: none;
-  transition:
-    opacity 0.62s var(--ease-out-expo) calc(var(--i, 0) * 55ms),
-    transform 0.62s var(--ease-out-expo) calc(var(--i, 0) * 55ms);
-}
-
-@media (prefers-reduced-motion: reduce) {
   html.js .split-word {
+    opacity: 0;
+    transform: translateY(0.5em);
+  }
+
+  html.js [data-revealed="true"] .split-word {
     opacity: 1;
     transform: none;
-    transition: none;
+    transition:
+      opacity 0.62s var(--ease-out-expo) calc(var(--i, 0) * 55ms),
+      transform 0.62s var(--ease-out-expo) calc(var(--i, 0) * 55ms);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.js .split-word {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
   }
 }
 
@@ -434,10 +460,27 @@ html.js [data-revealed="true"] .split-word {
    next slides over it. Pure CSS: no scroll listener, no pin-spacer, and it
    keeps working when JavaScript doesn't. */
 
-.scene-stack > .scene {
-  position: sticky;
-  top: 0;
-  min-height: 100svh;
+@layer components {
+  /* Sticky stacking is a DESKTOP effect only.
+   *
+   * On a phone a pinned 100svh scene is actively worse: the copy is taller
+   * than the viewport more often than not, so sticky pins a section you then
+   * have to scroll inside — and three of them in a row turns a short page into
+   * a long fight. Mobile gets ordinary flow, which is the right answer there
+   * rather than a degraded version of the desktop one. */
+  /* Sticky at every width, matching the reference — its scenes are
+     `position: sticky; top: 0; height: 100vh` with no breakpoint gate.
+     This was desktop-only for a while on the theory that a pinned full-height
+     scene would trap a phone user inside a section taller than the viewport.
+     The copy in these scenes is nowhere near that tall, and withholding the
+     signature move from most of the audience was the wrong trade.
+     `min-height` rather than `height` means a scene that ever does outgrow the
+     viewport simply gets taller and scrolls, instead of clipping. */
+  .scene-stack > .scene {
+    position: sticky;
+    top: 0;
+    min-height: 100svh;
+  }
 }
 
 /* Lenis mounts only on pointer-fine, motion-safe viewports. The guard lives in

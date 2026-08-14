@@ -19,7 +19,7 @@ export default async function PartnersPage() {
   const partners = await safe("admin-partners", () => getPledgeFulfilment(200), []);
 
   return (
-    <div className="max-w-6xl">
+    <div className="max-w-6xl 2xl:max-w-none">
       <header className="mb-6">
         <h1 className="m-0 text-2xl font-semibold tracking-tight">Partners</h1>
         <p className="m-0 mt-1 text-sm text-muted-foreground">

@@ -4,6 +4,8 @@ import { CmsImage } from "@/components/cms-image";
 import { Reveal, RevealItem, RevealList } from "@/components/reveal";
 import { SplitWords } from "@/components/split-words";
 import { PinnedMedia, PinnedPanel, Scene, SceneStack } from "@/components/scroll-sections";
+import { ParallaxMedia } from "@/components/parallax-media";
+import { PLACEHOLDER } from "@/lib/placeholder-images";
 import { safe } from "@/lib/db/safe";
 import {
   getContentBlock,
@@ -31,6 +33,7 @@ const STRANDS = [
     href: "/gatherings",
     tone: "bg-brand-bg",
     seed: 3,
+    photo: PLACEHOLDER.worship,
   },
   {
     title: "Teaching",
@@ -39,14 +42,19 @@ const STRANDS = [
     href: "/teaching",
     tone: "bg-surface",
     seed: 11,
+    photo: PLACEHOLDER.teaching,
   },
   {
+    // No stand-in photograph: the two that would fit are already used above,
+    // and a repeat on one scroll reads thinner than the generated field. The
+    // oxblood field suits this scene's drenched ground anyway.
     title: "Kinship",
     lead: "Smaller rooms, real names.",
     body: "Where people know your name, your work, and what you are carrying this month. This is where belonging stops being a word on a website.",
     href: "/community",
     tone: "on-brand",
     seed: 23,
+    photo: undefined,
   },
 ];
 
@@ -67,25 +75,39 @@ export default async function HomePage() {
           the headline — the reference site's signature opening. */}
       <section className="relative isolate min-h-[86svh] flex items-end overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <CmsImage
-            media={hero?.media}
-            alt={hero?.media?.altText ?? "The community gathered at dusk"}
-            priority
-            seed={7}
-            sizes="100vw"
-          />
+          {/* Slow drift on the hero as the page leaves it. Larger overscan than
+              the inline media, because a full-bleed frame shows an exposed edge
+              far more readily. */}
+          <ParallaxMedia className="absolute inset-0" drift={8} scaleFrom={1.12}>
+            <CmsImage
+              media={hero?.media}
+              alt={hero?.media?.altText ?? "The community gathered at dusk"}
+              fallback={PLACEHOLDER.hero}
+              priority
+              seed={7}
+              sizes="100vw"
+            />
+          </ParallaxMedia>
           {/* Type over photography needs a floor under it, or contrast becomes
-              whatever the photographer happened to shoot that day. */}
+              whatever the photographer happened to shoot that day.
+
+              The floor is oxblood, not neutral black — the brand colour is what
+              should be darkening the image, so the photograph reads as part of
+              the palette rather than sitting behind a generic scrim. */}
           <div
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(to top, oklch(0.16 0.05 16 / 0.92) 0%, oklch(0.16 0.05 16 / 0.62) 42%, oklch(0.16 0.05 16 / 0.24) 100%)",
+                "linear-gradient(to top, oklch(0.38 0.145 12 / 0.96) 0%, oklch(0.35 0.135 14 / 0.72) 46%, oklch(0.32 0.12 16 / 0.28) 100%)",
             }}
           />
         </div>
 
-        <div className="shell on-brand bg-transparent pb-(--space-block) pt-40 w-full">
+        {/* `.on-brand` supplies the oxblood ground behind the headline. It is
+            NOT bg-transparent: the scrim's bottom stop is the same oxblood at
+            0.96 alpha, so the panel and the gradient meet without a visible
+            band and the whole hero reads as one drenched field. */}
+        <div className="shell on-brand pb-(--space-block) pt-28 md:pt-40 w-full">
           <h1 className="m-0 text-chalk max-w-[19ch]" style={{ fontSize: "var(--step-5)" }}>
             <SplitWords text={hero?.title ?? "A community you *belong* to."} />
           </h1>
@@ -141,7 +163,7 @@ export default async function HomePage() {
                 )}
                 <Link
                   href={`/gatherings/${nextGathering.slug}`}
-                  className="mt-5 inline-flex items-center gap-2 text-brand-accent no-underline hover:underline"
+                  className="mt-5 inline-flex items-center gap-2 text-brand no-underline hover:underline"
                 >
                   What to expect
                   <ArrowRight size={15} aria-hidden />
@@ -173,35 +195,51 @@ export default async function HomePage() {
                 <h2 className="m-0 text-step-4 max-w-[12ch]">
                   <SplitWords text={strand.title} />
                 </h2>
-                <p
-                  className={`m-0 mt-5 text-step-1 ${
-                    strand.tone === "on-brand" ? "quiet-text" : "text-quiet"
-                  }`}
-                >
-                  {strand.lead}
-                </p>
-                <p className="measure m-0 mt-4">{strand.body}</p>
-                <Link
-                  href={strand.href}
-                  className={`mt-8 inline-flex items-center gap-2 no-underline underline underline-offset-4 ${
-                    strand.tone === "on-brand"
-                      ? "text-chalk decoration-chalk/40 hover:decoration-chalk"
-                      : "text-brand-accent decoration-transparent hover:decoration-current"
-                  }`}
-                >
-                  More on {strand.title.toLowerCase()}
-                  <ArrowRight size={15} aria-hidden />
-                </Link>
+                {/* Staggered behind the heading's own word reveal, so the
+                    block resolves as one gesture rather than four. */}
+                <Reveal from="below" delay={0.14} distance={14}>
+                  <p
+                    className={`m-0 mt-5 text-step-1 ${
+                      strand.tone === "on-brand" ? "quiet-text" : "text-quiet"
+                    }`}
+                  >
+                    {strand.lead}
+                  </p>
+                </Reveal>
+                <Reveal from="below" delay={0.22} distance={14}>
+                  <p className="measure m-0 mt-4">{strand.body}</p>
+                </Reveal>
+                <Reveal from="below" delay={0.3} distance={14}>
+                  <Link
+                    href={strand.href}
+                    className={`mt-8 inline-flex items-center gap-2 underline underline-offset-4 ${
+                      strand.tone === "on-brand"
+                        ? "text-chalk decoration-chalk/40 hover:decoration-chalk"
+                        : "text-brand decoration-transparent hover:decoration-current"
+                    }`}
+                  >
+                    More on {strand.title.toLowerCase()}
+                    <ArrowRight size={15} aria-hidden />
+                  </Link>
+                </Reveal>
               </div>
 
-              <figure className="relative m-0 hidden aspect-4/5 overflow-hidden rounded-[var(--radius)] md:block">
+              {/* Now shown on mobile too. The scroll-linked drift is pure
+                  transform on a composited layer, so it costs a phone nothing
+                  and it is most of what makes the section feel built. */}
+              <ParallaxMedia
+                className="m-0 aspect-4/5 rounded-(--radius)"
+                drift={5}
+                scaleFrom={1.08}
+              >
                 <CmsImage
                   media={null}
+                  fallback={strand.photo}
                   seed={strand.seed}
                   tone={i === 2 ? "soft" : "deep"}
-                  sizes="(min-width: 768px) 40vw, 0px"
+                  sizes="(min-width: 768px) 40vw, 100vw"
                 />
-              </figure>
+              </ParallaxMedia>
             </div>
           </Scene>
         ))}
@@ -211,13 +249,19 @@ export default async function HomePage() {
       <PinnedMedia
         className="section"
         media={
-          <CmsImage
-            media={belonging?.media}
-            alt={belonging?.media?.altText ?? "Members of the community together"}
-            seed={19}
-            tone="soft"
-            sizes="(min-width: 768px) 45vw, 100vw"
-          />
+          <ParallaxMedia
+            className="m-0 w-full aspect-4/5 max-h-full rounded-(--radius)"
+            drift={7}
+            scaleFrom={1.1}
+          >
+            <CmsImage
+              media={belonging?.media}
+              alt={belonging?.media?.altText ?? "Members of the community together"}
+              seed={19}
+              tone="soft"
+              sizes="(min-width: 768px) 45vw, 100vw"
+            />
+          </ParallaxMedia>
         }
       >
         <PinnedPanel>
@@ -242,7 +286,7 @@ export default async function HomePage() {
           </p>
           <Link
             href="/community"
-            className="mt-8 inline-flex items-center gap-2 text-brand-accent no-underline hover:underline"
+            className="mt-8 inline-flex items-center gap-2 text-brand no-underline hover:underline"
           >
             How we are put together
             <ArrowRight size={15} aria-hidden />
@@ -260,7 +304,7 @@ export default async function HomePage() {
               </h2>
               <Link
                 href="/teaching"
-                className="text-brand-accent no-underline hover:underline"
+                className="text-brand no-underline hover:underline"
               >
                 Everything
               </Link>

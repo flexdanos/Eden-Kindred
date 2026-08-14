@@ -8,7 +8,10 @@ import {
   mediaAssets,
   partnershipTiers,
   posts,
+  releaseTracks,
+  releases,
   siteSettings,
+  teamResources,
 } from "@/lib/db/schema";
 
 /**
@@ -80,6 +83,55 @@ export async function listTiers() {
     .select()
     .from(partnershipTiers)
     .orderBy(asc(partnershipTiers.sortOrder), asc(partnershipTiers.name));
+}
+
+export async function listReleases() {
+  return db
+    .select({
+      id: releases.id,
+      slug: releases.slug,
+      title: releases.title,
+      type: releases.type,
+      releasedAt: releases.releasedAt,
+      isPublished: releases.isPublished,
+      sortOrder: releases.sortOrder,
+    })
+    .from(releases)
+    .orderBy(asc(releases.sortOrder), desc(releases.releasedAt));
+}
+
+export async function getReleaseById(id: string) {
+  const [row] = await db.select().from(releases).where(eq(releases.id, id)).limit(1);
+  if (!row) return null;
+
+  const tracks = await db
+    .select()
+    .from(releaseTracks)
+    .where(eq(releaseTracks.releaseId, id))
+    .orderBy(asc(releaseTracks.trackNumber));
+
+  return { ...row, tracks };
+}
+
+export async function listTeamResources() {
+  return db
+    .select({
+      id: teamResources.id,
+      title: teamResources.title,
+      kind: teamResources.kind,
+      body: teamResources.body,
+      externalUrl: teamResources.externalUrl,
+      eventId: teamResources.eventId,
+      eventTitle: events.title,
+      eventStartsAt: events.startsAt,
+      mediaPath: mediaAssets.path,
+      mediaBucket: mediaAssets.bucket,
+      createdAt: teamResources.createdAt,
+    })
+    .from(teamResources)
+    .leftJoin(events, eq(teamResources.eventId, events.id))
+    .leftJoin(mediaAssets, eq(teamResources.mediaId, mediaAssets.id))
+    .orderBy(desc(teamResources.createdAt));
 }
 
 export async function listMediaAssets(limit = 200) {

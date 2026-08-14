@@ -87,7 +87,7 @@ export default async function ThankYouPage({
         <Icon
           size={40}
           aria-hidden
-          className={state === "failed" ? "text-brand" : "text-brand-accent"}
+          className={state === "succeeded" ? "text-brand-success" : "text-brand"}
         />
         <h1 className="m-0 mt-6 text-step-4">{copy.title}</h1>
         <p className="measure mt-5 text-step-1 text-quiet">{copy.body}</p>

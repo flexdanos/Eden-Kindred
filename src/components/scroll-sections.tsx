@@ -65,14 +65,16 @@ export function PinnedMedia({
   return (
     <section className={`relative ${className}`}>
       <div className="shell grid gap-8 md:grid-cols-2 md:gap-16">
+        {/* The caller supplies the frame (aspect ratio, radius, and any
+            scroll-linked treatment) rather than having one imposed here — so a
+            ParallaxMedia can own its own overflow context instead of being
+            nested inside a second one. */}
         <div
           className={`md:sticky md:top-0 md:h-svh md:flex md:items-center md:py-16 ${
             reverse ? "md:order-2" : ""
           }`}
         >
-          <figure className="relative m-0 w-full aspect-4/5 max-h-full overflow-hidden rounded-[var(--radius)]">
-            {media}
-          </figure>
+          {media}
         </div>
 
         <div className={reverse ? "md:order-1" : ""}>{children}</div>

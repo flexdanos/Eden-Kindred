@@ -10,11 +10,15 @@ web
 
 ## Users
 
-The primary visitor is a newcomer — someone who has heard the ministry's name, or found it through a friend or a search, and is quietly deciding whether this is a place for them. They arrive uncommitted and slightly guarded. They are usually on a mid-range Android phone on mobile data, often in bright daylight, and they will leave if the first screen is slow or asks for something before it has given anything.
+Eden Kindred is a worldwide community, not a Ghanaian one with a diaspora attached. Ghana is where a lot of the giving infrastructure lives, and it shapes payments — it does not define the audience, and copy that assumes a single city is wrong.
 
-The secondary visitor is an existing member of the worship community, returning for teaching, gathering times, and news. They need recency and speed over persuasion — they already believe, and the site should not re-sell them.
+The primary visitor is a newcomer — someone who has heard the community's name, or found it through a friend, a search, or the music, and is quietly deciding whether this is a place for them. They arrive uncommitted and slightly guarded. Many are on a mid-range Android phone on mobile data, often in bright daylight, and they will leave if the first screen is slow or asks for something before it has given anything. Designing for that visitor keeps the site fast for everyone else too.
 
-A third group matters commercially rather than editorially: diaspora Ghanaians and local partners who fund the work. They are not a separate audience to design a separate voice for; they are newcomers and members who reached the point of giving. Partnership is the destination of the same journey, not a parallel track.
+The secondary visitor is an existing member returning for music, teaching, gathering times, and news. They need recency and speed over persuasion — they already believe, and the site should not re-sell them.
+
+A third audience is the musicians. This is a music-led community, so the people who play are participants in the work rather than staff serving it. They get their own authenticated surface for charts, rehearsal material, and setlists.
+
+Partners who fund the work are not a separate audience with a separate voice; they are newcomers and members who reached the point of giving. Partnership is the destination of the same journey, not a parallel track.
 
 ## Product Purpose
 

@@ -38,7 +38,7 @@ export function LoginForm({ next }: { next: string }) {
   if (status === "sent") {
     return (
       <div className="mt-8 border border-hairline bg-surface p-6">
-        <MailCheck size={24} aria-hidden className="text-brand-accent" />
+        <MailCheck size={24} aria-hidden className="text-brand-success" />
         <h2 className="m-0 mt-4 text-step-1">Check your email</h2>
         <p className="m-0 mt-2 text-step--1 text-quiet">
           We sent a sign-in link to <strong className="text-ink">{email}</strong>. It

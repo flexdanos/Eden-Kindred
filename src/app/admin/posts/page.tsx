@@ -20,7 +20,9 @@ export default async function PostsPage() {
   const posts = await safe("admin-posts", () => listPosts(), []);
 
   return (
-    <div className="max-w-5xl">
+    <div className="max-w-5xl 2xl:max-w-6xl">
+      {/* One step wider, not uncapped — a single-column list row stretched
+          across 2000px is harder to scan, not easier. */}
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="m-0 text-2xl font-semibold tracking-tight">Teaching</h1>

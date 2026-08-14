@@ -4,6 +4,7 @@ import { getRecentDonations } from "@/lib/db/queries/admin";
 import { formatMinor } from "@/lib/money";
 import { StatusPill } from "@/components/admin/status-pill";
 import { EmptyState } from "@/components/admin/empty-state";
+import { ManualGiftForm } from "./manual-gift-form";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,10 @@ export default async function DonationsPage() {
   const donations = await safe("admin-donations", () => getRecentDonations(200), []);
 
   return (
-    <div className="max-w-6xl">
+    <div className="max-w-6xl 2xl:max-w-none">
+      {/* Uncapped past 2xl: this table has seven columns and horizontal scroll
+          below that. On a wide monitor the whole row should be readable at
+          once rather than capped for a measure that only matters to prose. */}
       <header className="mb-6">
         <h1 className="m-0 text-2xl font-semibold tracking-tight">Donations</h1>
         <p className="m-0 mt-1 text-sm text-muted-foreground">
@@ -35,6 +39,20 @@ export default async function DonationsPage() {
           Paystack webhook after it verifies the charge — not when the form is submitted.
         </p>
       </header>
+
+      <details className="mb-8 border border-border">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
+          Record a gift that arrived by bank transfer, Zelle, or Cash App
+        </summary>
+        <div className="border-t border-border p-5">
+          <p className="m-0 mb-5 max-w-[60ch] text-sm text-muted-foreground">
+            Those rails cannot notify this site — Zelle has no merchant API, and the others
+            need a merchant account. Anything received that way has to be entered here, or
+            the totals above will understate what actually came in.
+          </p>
+          <ManualGiftForm />
+        </div>
+      </details>
 
       {donations.length === 0 ? (
         <EmptyState

@@ -13,6 +13,19 @@ import { createServerClient } from "@supabase/ssr";
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  /**
+   * Development preview: let /admin through unauthenticated.
+   *
+   * Mirrors devPreviewUser() in src/lib/auth/guard.ts and carries the same two
+   * guards — a production build fails the NODE_ENV check regardless of what is
+   * set in the environment. Both layers must agree, or the middleware would
+   * bounce a request the page guard would have allowed.
+   */
+  const devPreview =
+    process.env.NODE_ENV !== "production" && process.env.ADMIN_DEV_BYPASS === "true";
+
+  if (devPreview) return response;
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

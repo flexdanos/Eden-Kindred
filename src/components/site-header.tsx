@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 
 const NAV = [
+  { href: "/music", label: "Music" },
   { href: "/community", label: "Community" },
   { href: "/gatherings", label: "Gatherings" },
   { href: "/teaching", label: "Teaching" },
@@ -23,8 +24,42 @@ const NAV = [
  */
 export function SiteHeader() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+
+  /**
+   * The sheet's open state is the route it was opened on, not a boolean.
+   *
+   * Navigating then closes it for free — the stored path no longer matches the
+   * current one — including on back/forward, which an onClick handler would
+   * miss. The previous version synced a boolean from a pathname effect, which
+   * meant an extra render on every navigation just to set false.
+   */
+  const [openedAt, setOpenedAt] = useState<string | null>(null);
+  const open = openedAt === pathname;
+  const closeMenu = () => setOpenedAt(null);
+
+  /**
+   * Publish the header's real height as --header-h.
+   *
+   * The mobile sheet sits directly beneath the bar, and it used to be pinned
+   * with a hardcoded 64px. That is only correct at one font size: bump the
+   * browser's minimum font size, land on a viewport where the wordmark wraps,
+   * or add a safe-area inset, and the sheet either overlaps the bar or floats
+   * below it. Measuring costs one ResizeObserver and is always right.
+   */
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+
+    const sync = () =>
+      el.style.setProperty("--header-h", `${el.getBoundingClientRect().height}px`);
+
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -32,9 +67,6 @@ export function SiteHeader() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  // Close the mobile sheet on navigation.
-  useEffect(() => setOpen(false), [pathname]);
 
   // Lock the page behind the open sheet.
   useEffect(() => {
@@ -45,13 +77,16 @@ export function SiteHeader() {
   }, [open]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenedAt(null);
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   return (
     <header
+      ref={headerRef}
       className="sticky top-0 z-(--z-sticky) transition-colors duration-300"
       style={{
         background: scrolled ? "color-mix(in oklch, var(--brand-bg) 92%, transparent)" : "transparent",
@@ -98,7 +133,7 @@ export function SiteHeader() {
 
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpenedAt(open ? null : pathname)}
           aria-expanded={open}
           aria-controls="mobile-nav"
           aria-label={open ? "Close menu" : "Open menu"}
@@ -113,13 +148,14 @@ export function SiteHeader() {
       <div
         id="mobile-nav"
         hidden={!open}
-        className="md:hidden fixed inset-x-0 top-[var(--header-h,64px)] bottom-0 bg-brand-bg border-t border-hairline"
+        className="md:hidden fixed inset-x-0 top-(--header-h,64px) bottom-0 overflow-y-auto overscroll-contain bg-brand-bg border-t border-hairline"
       >
         <nav aria-label="Primary (mobile)" className="shell py-8">
           <ul className="flex flex-col gap-1 list-none m-0 p-0">
             {NAV.map((item) => (
               <li key={item.href}>
                 <Link
+                  onClick={closeMenu}
                   href={item.href}
                   className="block font-display text-step-3 py-3 no-underline border-b border-hairline"
                 >
@@ -129,8 +165,9 @@ export function SiteHeader() {
             ))}
           </ul>
           <Link
+            onClick={closeMenu}
             href="/join"
-            className="mt-8 inline-flex w-full items-center justify-center bg-brand text-chalk px-6 py-4 text-step-0 font-medium no-underline rounded-[var(--radius)]"
+            className="mt-8 inline-flex w-full items-center justify-center bg-brand text-chalk px-6 py-4 text-step-0 font-medium no-underline rounded-(--radius)"
           >
             Join us
           </Link>

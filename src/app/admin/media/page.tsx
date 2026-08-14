@@ -13,7 +13,9 @@ export default async function MediaPage() {
   const missingAlt = assets.filter((a) => !a.altText).length;
 
   return (
-    <div className="max-w-6xl">
+    <div className="max-w-6xl 2xl:max-w-none">
+      {/* Uncapped: the grid is auto-fill, so extra width becomes more
+          thumbnails per row rather than bigger ones. */}
       <header className="mb-6">
         <h1 className="m-0 text-2xl font-semibold tracking-tight">Media</h1>
         <p className="m-0 mt-1 text-sm text-muted-foreground">

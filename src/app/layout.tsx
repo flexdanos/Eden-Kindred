@@ -57,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en-GH"
       className={`${alegreya.variable} ${schibsted.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
         {/*

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { getSupabasePublicEnv } from "@/lib/supabase/env";
 
 /**
  * Refreshes the Supabase session cookie on every request, and turns unauthed
@@ -26,8 +27,7 @@ export async function middleware(request: NextRequest) {
 
   if (devPreview) return response;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const env = getSupabasePublicEnv();
 
   /**
    * Before .env.local exists, createServerClient would throw here — and because
@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
    * Degrade instead: skip the session refresh, and keep /admin closed since we
    * cannot verify anyone. Same philosophy as safe() in src/lib/db/safe.ts.
    */
-  if (!url || !anonKey) {
+  if (!env) {
     console.warn(
       "[middleware] Supabase env vars missing — skipping session refresh. /admin is closed until .env.local is set.",
     );
@@ -52,8 +52,8 @@ export async function middleware(request: NextRequest) {
   }
 
   const supabase = createServerClient(
-    url,
-    anonKey,
+    env.url,
+    env.key,
     {
       cookies: {
         getAll() {

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Alegreya, Schibsted_Grotesk } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 /**
@@ -59,7 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${alegreya.variable} ${schibsted.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
+      <head suppressHydrationWarning>
         {/*
           Marks that JavaScript is available, before first paint.
 
@@ -70,13 +71,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           here rather than in the SSR className is the whole point: the server
           must NOT emit it.
         */}
-        <script
+        <Script
+          id="mark-js"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `document.documentElement.classList.add('js')`,
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

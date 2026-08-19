@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
   const env = getSupabasePublicEnv();
 
   /**
-   * Before .env.local exists, createServerClient would throw here — and because
+   * Before .env exists, createServerClient would throw here — and because
    * middleware runs ahead of routing, that turns every single route into a 500,
    * including the public pages that are designed to render without a database.
    *
@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
    */
   if (!env) {
     console.warn(
-      "[middleware] Supabase env vars missing — skipping session refresh. /admin is closed until .env.local is set.",
+      "[middleware] Supabase env vars missing — skipping session refresh. /admin is closed until .env is set.",
     );
 
     if (request.nextUrl.pathname.startsWith("/admin")) {

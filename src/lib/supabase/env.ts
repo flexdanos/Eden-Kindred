@@ -31,7 +31,7 @@ export function requireSupabasePublicEnv(): { url: string; key: string } {
   if (!env) {
     throw new Error(
       "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and " +
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY (or …_PUBLISHABLE_KEY) in .env.local.",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY (or …_PUBLISHABLE_KEY) in .env.",
     );
   }
   return env;

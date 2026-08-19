@@ -20,11 +20,11 @@ import { config } from "dotenv";
  * `create policy`), so running this twice is safe.
  */
 
-config({ path: ".env.local" });
+config({ path: ".env" });
 
 const url = process.env.DIRECT_URL;
 if (!url) {
-  console.error("DIRECT_URL is not set in .env.local");
+  console.error("DIRECT_URL is not set in .env");
   process.exit(1);
 }
 

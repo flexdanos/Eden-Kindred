@@ -48,6 +48,22 @@ as $$
   select coalesce(public.current_user_role() in ('admin', 'editor'), false);
 $$;
 
+-- Musicians' area. Staff are included deliberately: someone who can edit the
+-- whole site being locked out of the rehearsal notes would be theatre.
+create or replace function public.is_team_member()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select coalesce(
+    (select p.is_team_member from public.profiles p where p.id = auth.uid())
+    or public.is_admin_or_editor(),
+    false
+  );
+$$;
+
 -- ── Keep profiles in sync with auth.users ────────────────────────────────
 
 create or replace function public.handle_new_user()
@@ -91,6 +107,10 @@ create policy "profiles: staff read all"
 -- out of editing their own profile entirely. Pin the role to whatever it
 -- already is instead — self-promotion is still impossible, but an editor can
 -- change their own name.
+-- Every privilege-bearing column must be pinned to its current value here, not
+-- just `role`. `is_team_member` was added later and was briefly not pinned,
+-- which let any signed-in member grant themselves the musicians' area with a
+-- single PostgREST call using nothing but the public anon key.
 drop policy if exists "profiles: update own" on public.profiles;
 create policy "profiles: update own"
   on public.profiles for update
@@ -98,6 +118,9 @@ create policy "profiles: update own"
   with check (
     auth.uid() = id
     and role = (select p.role from public.profiles p where p.id = auth.uid())
+    and is_team_member = (
+      select p.is_team_member from public.profiles p where p.id = auth.uid()
+    )
   );
 
 drop policy if exists "profiles: admins update any" on public.profiles;
@@ -326,6 +349,80 @@ create policy "pledge_periods: admins read all"
 -- Locked entirely. Server-side only; no policies means no access for
 -- anon/authenticated once RLS is on.
 alter table public.webhook_events enable row level security;
+
+-- ── releases ─────────────────────────────────────────────────────────────
+alter table public.releases enable row level security;
+
+drop policy if exists "releases: public reads published" on public.releases;
+create policy "releases: public reads published"
+  on public.releases for select
+  using (is_published = true);
+
+drop policy if exists "releases: staff read all" on public.releases;
+create policy "releases: staff read all"
+  on public.releases for select
+  using (public.is_admin_or_editor());
+
+drop policy if exists "releases: staff insert" on public.releases;
+create policy "releases: staff insert"
+  on public.releases for insert
+  with check (public.is_admin_or_editor());
+
+drop policy if exists "releases: staff update" on public.releases;
+create policy "releases: staff update"
+  on public.releases for update
+  using (public.is_admin_or_editor())
+  with check (public.is_admin_or_editor());
+
+drop policy if exists "releases: admins delete" on public.releases;
+create policy "releases: admins delete"
+  on public.releases for delete
+  using (public.is_admin());
+
+-- ── release_tracks ───────────────────────────────────────────────────────
+-- A track listing is only as public as the release it belongs to. Without the
+-- EXISTS check, the tracks of an unannounced album would be readable while the
+-- album itself was still a draft.
+alter table public.release_tracks enable row level security;
+
+drop policy if exists "release_tracks: public reads published" on public.release_tracks;
+create policy "release_tracks: public reads published"
+  on public.release_tracks for select
+  using (
+    exists (
+      select 1 from public.releases r
+      where r.id = release_tracks.release_id and r.is_published
+    )
+  );
+
+drop policy if exists "release_tracks: staff read all" on public.release_tracks;
+create policy "release_tracks: staff read all"
+  on public.release_tracks for select
+  using (public.is_admin_or_editor());
+
+drop policy if exists "release_tracks: staff manage" on public.release_tracks;
+create policy "release_tracks: staff manage"
+  on public.release_tracks for all
+  using (public.is_admin_or_editor())
+  with check (public.is_admin_or_editor());
+
+-- ── team_resources ───────────────────────────────────────────────────────
+-- NO public policy at any level. Rehearsal material, unreleased arrangements,
+-- and who is playing when are none of the internet's business, and with RLS on
+-- and no matching policy the anon key gets nothing — which is the right
+-- default for this table.
+alter table public.team_resources enable row level security;
+
+drop policy if exists "team_resources: team reads" on public.team_resources;
+create policy "team_resources: team reads"
+  on public.team_resources for select
+  using (public.is_team_member());
+
+drop policy if exists "team_resources: staff manage" on public.team_resources;
+create policy "team_resources: staff manage"
+  on public.team_resources for all
+  using (public.is_admin_or_editor())
+  with check (public.is_admin_or_editor());
 
 -- ── site_settings ────────────────────────────────────────────────────────
 alter table public.site_settings enable row level security;

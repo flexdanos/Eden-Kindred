@@ -4,6 +4,7 @@ const COLUMNS = [
   {
     heading: "Community",
     links: [
+      { href: "/music", label: "Music" },
       { href: "/community", label: "Who we are" },
       { href: "/gatherings", label: "Gatherings" },
       { href: "/teaching", label: "Teaching" },
@@ -15,7 +16,7 @@ const COLUMNS = [
     links: [
       { href: "/partnership", label: "Become a partner" },
       { href: "/give", label: "Give once" },
-      { href: "/partnership/accountability", label: "Where money goes" },
+      { href: "/partnership#accountability", label: "Where money goes" },
     ],
   },
 ];
@@ -57,10 +58,10 @@ export function SiteFooter() {
 
         <div className="mt-10 pt-6 border-t border-hairline flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
           <p className="text-step--1 text-quiet m-0">
-            © {year} Eden Kindred. Accra, Ghana.
+            © {year} Eden Kindred. A worship community, wherever you are.
           </p>
           <p className="text-step--1 text-quiet m-0">
-            Gifts are received in Ghana cedis (GHS) by mobile money.
+            Mobile money in cedis, or bank transfer, Zelle and Cash App from abroad.
           </p>
         </div>
       </div>

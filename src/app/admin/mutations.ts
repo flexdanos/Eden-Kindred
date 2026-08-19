@@ -6,10 +6,14 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import {
   contentBlocks,
+  donations,
   events,
   partnershipTiers,
   posts,
+  releaseTracks,
+  releases,
   siteSettings,
+  teamResources,
 } from "@/lib/db/schema";
 import { requireStaff, requireAdmin } from "@/lib/auth/guard";
 import { toMinor } from "@/lib/money";
@@ -300,6 +304,278 @@ export async function saveTier(
   revalidatePath("/give");
   revalidatePath("/partnership");
   return ok("Saved.");
+}
+
+// ── Releases ─────────────────────────────────────────────────────────────
+
+const releaseSchema = z.object({
+  id: z.string().uuid().optional().or(z.literal("")),
+  title: z.string().trim().min(1, "Name the release").max(200),
+  slug: z.string().trim().max(80).optional().or(z.literal("")),
+  type: z.enum(["album", "ep", "single", "live_session"]),
+  description: z.string().max(8000).optional().or(z.literal("")),
+  releasedAt: z.string().optional().or(z.literal("")),
+  coverMediaId: optionalUuid,
+  spotifyUrl: z.string().trim().url().optional().or(z.literal("")),
+  appleMusicUrl: z.string().trim().url().optional().or(z.literal("")),
+  youtubeUrl: z.string().trim().url().optional().or(z.literal("")),
+  bandcampUrl: z.string().trim().url().optional().or(z.literal("")),
+  // IDs, never embed markup — see src/components/release-player.tsx.
+  youtubeVideoId: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9_-]*$/, "Just the video id, not the whole embed code")
+    .max(64)
+    .optional()
+    .or(z.literal("")),
+  spotifyEmbedId: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9_-]*$/, "Just the id from the Spotify share link")
+    .max(64)
+    .optional()
+    .or(z.literal("")),
+  sortOrder: z.string().optional().or(z.literal("")),
+  isPublished: z.union([z.literal("on"), z.literal("")]).optional(),
+  /** One track per line: `Title | written by | 3:42`. Only the title is required. */
+  tracks: z.string().max(20_000).optional().or(z.literal("")),
+});
+
+function parseTracks(input: string) {
+  return input
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, i) => {
+      const [title, writtenBy, duration] = line.split("|").map((p) => p.trim());
+      let durationSeconds: number | null = null;
+
+      if (duration && /^\d{1,2}:\d{2}$/.test(duration)) {
+        const [m, s] = duration.split(":").map(Number);
+        durationSeconds = m * 60 + s;
+      }
+
+      return {
+        trackNumber: i + 1,
+        title: title || `Track ${i + 1}`,
+        writtenBy: writtenBy || null,
+        durationSeconds,
+      };
+    });
+}
+
+export async function saveRelease(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const auth = await requireStaff();
+  if (!auth.ok) return fail(auth.error);
+
+  const parsed = releaseSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Check the highlighted fields.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+
+  const d = parsed.data;
+  const published = d.isPublished === "on";
+
+  const values = {
+    title: d.title,
+    slug: slugify(d.slug || d.title),
+    type: d.type,
+    description: d.description || null,
+    releasedAt: d.releasedAt || null,
+    coverMediaId: d.coverMediaId,
+    spotifyUrl: d.spotifyUrl || null,
+    appleMusicUrl: d.appleMusicUrl || null,
+    youtubeUrl: d.youtubeUrl || null,
+    bandcampUrl: d.bandcampUrl || null,
+    youtubeVideoId: d.youtubeVideoId || null,
+    spotifyEmbedId: d.spotifyEmbedId || null,
+    sortOrder: Number(d.sortOrder || 0),
+    isPublished: published,
+    publishedAt: published ? new Date() : null,
+  };
+
+  try {
+    let releaseId = d.id || null;
+
+    if (releaseId) {
+      await db.update(releases).set(values).where(eq(releases.id, releaseId));
+    } else {
+      const [row] = await db.insert(releases).values(values).returning({ id: releases.id });
+      releaseId = row.id;
+    }
+
+    // Tracks are replaced wholesale rather than diffed. They are a short
+    // ordered list typed as text, and a diff would be more code and more ways
+    // to end up with a duplicate track number.
+    await db.delete(releaseTracks).where(eq(releaseTracks.releaseId, releaseId));
+
+    const tracks = parseTracks(d.tracks ?? "");
+    if (tracks.length > 0) {
+      await db.insert(releaseTracks).values(tracks.map((t) => ({ ...t, releaseId })));
+    }
+  } catch (error) {
+    console.error("[admin] saveRelease", error);
+    return fail("That web address is already used by another release, or the save failed.");
+  }
+
+  revalidatePath("/admin/releases");
+  revalidatePath("/music");
+  return ok(published ? "Published." : "Saved as a draft.");
+}
+
+// ── Team resources ───────────────────────────────────────────────────────
+
+const teamResourceSchema = z.object({
+  id: z.string().uuid().optional().or(z.literal("")),
+  title: z.string().trim().min(1, "Give it a title").max(200),
+  kind: z.enum(["chord_chart", "rehearsal_audio", "setlist", "note"]),
+  body: z.string().max(20_000).optional().or(z.literal("")),
+  mediaId: optionalUuid,
+  externalUrl: z.string().trim().url().optional().or(z.literal("")),
+  eventId: optionalUuid,
+});
+
+export async function saveTeamResource(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const auth = await requireStaff();
+  if (!auth.ok) return fail(auth.error);
+
+  const parsed = teamResourceSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Check the highlighted fields.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+
+  const d = parsed.data;
+  const values = {
+    title: d.title,
+    kind: d.kind,
+    body: d.body || null,
+    mediaId: d.mediaId,
+    externalUrl: d.externalUrl || null,
+    eventId: d.eventId,
+    createdBy: auth.user.id,
+    updatedAt: new Date(),
+  };
+
+  try {
+    if (d.id) await db.update(teamResources).set(values).where(eq(teamResources.id, d.id));
+    else await db.insert(teamResources).values(values);
+  } catch (error) {
+    console.error("[admin] saveTeamResource", error);
+    return fail("Saving that failed.");
+  }
+
+  revalidatePath("/admin/team");
+  revalidatePath("/team");
+  return ok("Saved.");
+}
+
+export async function deleteTeamResource(formData: FormData): Promise<void> {
+  const auth = await requireStaff();
+  if (!auth.ok) return;
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await db.delete(teamResources).where(eq(teamResources.id, id));
+  revalidatePath("/admin/team");
+  revalidatePath("/team");
+}
+
+// ── Manual gifts ─────────────────────────────────────────────────────────
+
+const manualGiftSchema = z.object({
+  provider: z.enum(["bank_transfer", "zelle", "cash_app", "other"]),
+  reference: z.string().trim().min(1, "Enter the reference from your statement").max(120),
+  amount: z.string().min(1, "Enter the amount"),
+  currency: z.string().trim().length(3).default("GHS"),
+  donorName: z.string().trim().max(120).optional().or(z.literal("")),
+  donorEmail: z.string().trim().email().optional().or(z.literal("")),
+  paidAt: z.string().min(1, "When did it arrive?"),
+  note: z.string().trim().max(500).optional().or(z.literal("")),
+  isPublicDisplay: z.union([z.literal("on"), z.literal("")]).optional(),
+});
+
+/**
+ * Records a gift that arrived outside Paystack — a bank transfer, Zelle, or
+ * Cash App.
+ *
+ * None of those rails can notify a website: Zelle has no merchant API at all,
+ * and the others need a merchant account this project does not have. So the
+ * only way the dashboard tells the truth about total income is if someone
+ * reads the statement and enters what they find.
+ *
+ * The gift is written straight to `succeeded` because, unlike a Paystack
+ * charge, its existence has already been verified — by a human, looking at a
+ * bank statement.
+ */
+export async function recordManualGift(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const auth = await requireStaff();
+  if (!auth.ok) return fail(auth.error);
+
+  const parsed = manualGiftSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Check the highlighted fields.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+
+  const d = parsed.data;
+
+  let amountMinor: number;
+  try {
+    amountMinor = toMinor(d.amount);
+  } catch {
+    return fail("That amount isn't a number.");
+  }
+  if (amountMinor < 1) return fail("Enter an amount greater than zero.");
+
+  const paidAt = new Date(d.paidAt);
+  if (Number.isNaN(paidAt.getTime())) return fail("That date isn't valid.");
+
+  try {
+    await db.insert(donations).values({
+      provider: d.provider,
+      providerReference: d.reference,
+      amountMinor,
+      currency: d.currency.toUpperCase(),
+      type: "one_time",
+      status: "succeeded",
+      donorName: d.donorName || null,
+      donorEmail: d.donorEmail || null,
+      isPublicDisplay: d.isPublicDisplay === "on",
+      paidAt,
+      note: d.note || null,
+      recordedBy: auth.user.id,
+    });
+  } catch (error) {
+    console.error("[admin] recordManualGift", error);
+    // The unique index on (provider, provider_reference) is what makes this
+    // safe to retry — the same bank reference cannot be entered twice.
+    return fail("A gift with that reference is already recorded for this method.");
+  }
+
+  revalidatePath("/admin/donations");
+  revalidatePath("/admin");
+  return ok("Gift recorded.");
 }
 
 // ── Site settings ────────────────────────────────────────────────────────

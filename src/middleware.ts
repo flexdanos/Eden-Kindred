@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { getSupabasePublicEnv } from "@/lib/supabase/env";
 
 /**
  * Refreshes the Supabase session cookie on every request, and turns unauthed
@@ -13,20 +14,32 @@ import { createServerClient } from "@supabase/ssr";
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  /**
+   * Development preview: let /admin through unauthenticated.
+   *
+   * Mirrors devPreviewUser() in src/lib/auth/guard.ts and carries the same two
+   * guards — a production build fails the NODE_ENV check regardless of what is
+   * set in the environment. Both layers must agree, or the middleware would
+   * bounce a request the page guard would have allowed.
+   */
+  const devPreview =
+    process.env.NODE_ENV !== "production" && process.env.ADMIN_DEV_BYPASS === "true";
+
+  if (devPreview) return response;
+
+  const env = getSupabasePublicEnv();
 
   /**
-   * Before .env.local exists, createServerClient would throw here — and because
+   * Before .env exists, createServerClient would throw here — and because
    * middleware runs ahead of routing, that turns every single route into a 500,
    * including the public pages that are designed to render without a database.
    *
    * Degrade instead: skip the session refresh, and keep /admin closed since we
    * cannot verify anyone. Same philosophy as safe() in src/lib/db/safe.ts.
    */
-  if (!url || !anonKey) {
+  if (!env) {
     console.warn(
-      "[middleware] Supabase env vars missing — skipping session refresh. /admin is closed until .env.local is set.",
+      "[middleware] Supabase env vars missing — skipping session refresh. /admin is closed until .env is set.",
     );
 
     if (request.nextUrl.pathname.startsWith("/admin")) {
@@ -39,8 +52,8 @@ export async function middleware(request: NextRequest) {
   }
 
   const supabase = createServerClient(
-    url,
-    anonKey,
+    env.url,
+    env.key,
     {
       cookies: {
         getAll() {

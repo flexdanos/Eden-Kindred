@@ -4,7 +4,7 @@ import "server-only";
  * Runs a query and falls back rather than throwing.
  *
  * Purpose is narrow and deliberate: before Supabase is wired up (no
- * .env.local, empty database), `npm run dev` should still render the whole
+ * .env, empty database), `npm run dev` should still render the whole
  * designed site rather than a stack trace. It also means one unreachable
  * section can't take the whole page down in production.
  *

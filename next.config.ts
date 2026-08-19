@@ -11,9 +11,21 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: supabaseHost
-      ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }]
-      : [],
+    remotePatterns: [
+      // Stand-in photography (src/lib/placeholder-images.ts). Remove this entry
+      // once every section has real uploaded imagery — it exists only so the
+      // site looks finished before the ministry's own photographs arrive.
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+      ...(supabaseHost
+        ? ([
+            {
+              protocol: "https" as const,
+              hostname: supabaseHost,
+              pathname: "/storage/v1/object/public/**",
+            },
+          ])
+        : []),
+    ],
     // AVIF first: meaningfully smaller than WebP, and the audience is on
     // metered mobile data.
     formats: ["image/avif", "image/webp"],

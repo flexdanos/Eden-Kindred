@@ -12,7 +12,7 @@ import { config } from "dotenv";
  * is read-only and safe to run against any environment.
  */
 
-config({ path: ".env.local" });
+config({ path: ".env" });
 
 const sql = postgres(process.env.DIRECT_URL, {
   max: 1,

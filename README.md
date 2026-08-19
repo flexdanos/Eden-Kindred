@@ -41,7 +41,7 @@ The pooler settings in [src/lib/db/index.ts](src/lib/db/index.ts) (`prepare: fal
 ### 2. Environment
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
 Fill it in. `SUPABASE_SERVICE_ROLE_KEY` has no `NEXT_PUBLIC_` prefix deliberately — it bypasses RLS entirely and must never reach the browser.

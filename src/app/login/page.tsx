@@ -21,7 +21,7 @@ export default async function LoginPage({
         </p>
         <h1 className="m-0 mt-8 text-step-3">Sign in</h1>
         <p className="mt-3 text-quiet text-step--1">
-          We&apos;ll email you a link. No password to remember.
+          Sign in with your password, or have us email you a 6-digit code.
         </p>
 
         <LoginForm next={next ?? "/admin"} />

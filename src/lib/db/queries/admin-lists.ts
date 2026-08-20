@@ -24,13 +24,15 @@ export async function listContentBlocks() {
     .select({
       id: contentBlocks.id,
       slug: contentBlocks.slug,
+      kind: contentBlocks.kind,
+      sortOrder: contentBlocks.sortOrder,
       title: contentBlocks.title,
       body: contentBlocks.body,
       isPublished: contentBlocks.isPublished,
       updatedAt: contentBlocks.updatedAt,
     })
     .from(contentBlocks)
-    .orderBy(asc(contentBlocks.slug));
+    .orderBy(asc(contentBlocks.sortOrder), asc(contentBlocks.slug));
 }
 
 export async function getContentBlockById(id: string) {

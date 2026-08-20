@@ -1,395 +1,56 @@
-import Link from "next/link";
-import { ArrowRight, MapPin } from "lucide-react";
-import { CmsImage } from "@/components/cms-image";
-import { Reveal, RevealItem, RevealList } from "@/components/reveal";
-import { SplitWords } from "@/components/split-words";
-import { PinnedMedia, PinnedPanel, Scene, SceneStack } from "@/components/scroll-sections";
-import { ParallaxMedia } from "@/components/parallax-media";
-import { PLACEHOLDER } from "@/lib/placeholder-images";
+import { CtaSection } from "@/components/home-sections/cta-section";
+import { GatheringPreviewSection } from "@/components/home-sections/gathering-preview-section";
+import { HeroSection } from "@/components/home-sections/hero-section";
+import { PinnedSection } from "@/components/home-sections/pinned-section";
+import { SceneSection } from "@/components/home-sections/scene-section";
+import { TeachingListSection } from "@/components/home-sections/teaching-list-section";
 import { safe } from "@/lib/db/safe";
-import {
-  getContentBlock,
-  getPublishedPosts,
-  getUpcomingEvents,
-} from "@/lib/db/queries/public";
+import { getHomeSections, getPublishedPosts, getUpcomingEvents } from "@/lib/db/queries/public";
 
 export const revalidate = 300;
 
-const gatheringTime = new Intl.DateTimeFormat("en-GH", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  hour: "numeric",
-  minute: "2-digit",
-  timeZone: "Africa/Accra",
-  timeZoneName: "short",
-});
-
-const STRANDS = [
-  {
-    title: "Worship",
-    lead: "Sung and spoken, unhurried.",
-    body: "The gathering is the practice, not the warm-up to one. If you are new, this is the part where you can simply stand and listen. Nobody is counting.",
-    href: "/gatherings",
-    tone: "bg-brand-bg",
-    seed: 3,
-    photo: PLACEHOLDER.worship,
-  },
-  {
-    title: "Teaching",
-    lead: "Slowly, and out loud.",
-    body: "We work through scripture together with room to disagree in the room rather than in the car afterwards. Questions are not an interruption of the thing; they are the thing.",
-    href: "/teaching",
-    tone: "bg-surface",
-    seed: 11,
-    photo: PLACEHOLDER.teaching,
-  },
-  {
-    // No stand-in photograph: the two that would fit are already used above,
-    // and a repeat on one scroll reads thinner than the generated field. The
-    // oxblood field suits this scene's drenched ground anyway.
-    title: "Kinship",
-    lead: "Smaller rooms, real names.",
-    body: "Where people know your name, your work, and what you are carrying this month. This is where belonging stops being a word on a website.",
-    href: "/community",
-    tone: "on-brand",
-    seed: 23,
-    photo: undefined,
-  },
-];
-
+/**
+ * The whole homepage is an ordered, admin-editable list of sections
+ * (/admin/content) — nothing here is hardcoded copy or imagery. A section
+ * with no published row simply doesn't render; there is no per-section
+ * designed-copy fallback to fall back to.
+ */
 export default async function HomePage() {
-  const [hero, belonging, events, posts] = await Promise.all([
-    safe("home-hero", () => getContentBlock("home-hero"), null),
-    safe("home-belonging", () => getContentBlock("home-belonging"), null),
+  const [sections, events, posts] = await Promise.all([
+    safe("home-sections", () => getHomeSections(), []),
     safe("upcoming-events", () => getUpcomingEvents(3), []),
     safe("recent-posts", () => getPublishedPosts(3), []),
   ]);
 
-  const nextGathering = events[0] ?? null;
+  const sceneSections = sections.filter((s) => s.kind === "scene");
+  const firstSceneIndex = sections.findIndex((s) => s.kind === "scene");
 
   return (
     <>
-      {/* ── Hero ──────────────────────────────────────────────────────────
-          Full-bleed imagery with overlaid type, and the split-word reveal on
-          the headline — the reference site's signature opening. */}
-      <section className="relative isolate min-h-[86svh] flex items-end overflow-hidden">
-        <div className="absolute inset-0 -z-10">
-          {/* Slow drift on the hero as the page leaves it. Larger overscan than
-              the inline media, because a full-bleed frame shows an exposed edge
-              far more readily. */}
-          <ParallaxMedia className="absolute inset-0" drift={8} scaleFrom={1.12}>
-            <CmsImage
-              media={hero?.media}
-              alt={hero?.media?.altText ?? "The community gathered at dusk"}
-              fallback={PLACEHOLDER.hero}
-              priority
-              seed={7}
-              sizes="100vw"
-            />
-          </ParallaxMedia>
-          {/* Type over photography needs a floor under it, or contrast becomes
-              whatever the photographer happened to shoot that day.
-
-              The floor is oxblood, not neutral black — the brand colour is what
-              should be darkening the image, so the photograph reads as part of
-              the palette rather than sitting behind a generic scrim. */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(to top, oklch(0.38 0.145 12 / 0.96) 0%, oklch(0.35 0.135 14 / 0.72) 46%, oklch(0.32 0.12 16 / 0.28) 100%)",
-            }}
-          />
-        </div>
-
-        {/* `.on-brand` supplies the oxblood ground behind the headline. It is
-            NOT bg-transparent: the scrim's bottom stop is the same oxblood at
-            0.96 alpha, so the panel and the gradient meet without a visible
-            band and the whole hero reads as one drenched field. */}
-        <div className="shell on-brand pb-(--space-block) pt-28 md:pt-40 w-full">
-          <h1 className="m-0 text-chalk max-w-[19ch]" style={{ fontSize: "var(--step-5)" }}>
-            <SplitWords text={hero?.title ?? "A community you *belong* to."} />
-          </h1>
-
-          <Reveal from="below" delay={0.45}>
-            <p className="measure mt-6 text-step-1 text-chalk/85">
-              {hero?.body ??
-                "Not an audience you join. We gather to worship, to learn, and to know each other by name."}
-            </p>
-          </Reveal>
-
-          <Reveal from="below" delay={0.55}>
-            <div className="mt-9 flex flex-wrap items-center gap-3">
-              <Link
-                href="/join"
-                className="inline-flex items-center gap-2 bg-chalk text-ink px-7 py-4 font-medium no-underline rounded-[var(--radius)] transition-transform duration-(--dur-fast) hover:-translate-y-0.5"
-              >
-                Join the community
-                <ArrowRight size={17} aria-hidden />
-              </Link>
-              <Link
-                href="/partnership"
-                className="inline-flex items-center px-7 py-4 font-medium no-underline text-chalk border border-chalk/40 rounded-[var(--radius)] transition-colors hover:border-chalk"
-              >
-                Partner with us
-              </Link>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── Next gathering ────────────────────────────────────────────────
-          Straight after the hero on purpose: a real time and a real place
-          before anything is asked for. */}
-      <section className="section border-b border-hairline">
-        <div className="shell grid gap-(--space-block) md:grid-cols-[0.9fr_1.1fr] md:items-end">
-          <h2 className="m-0 text-step-3 max-w-[14ch]">
-            <SplitWords text="The next time we *gather*" />
-          </h2>
-
-          <Reveal from="below" delay={0.08}>
-            {nextGathering ? (
-              <div>
-                <p className="m-0 text-step-1 font-medium">{nextGathering.title}</p>
-                <p className="m-0 mt-2 text-quiet">
-                  {gatheringTime.format(nextGathering.startsAt)}
-                </p>
-                {nextGathering.location && (
-                  <p className="m-0 mt-1 text-quiet inline-flex items-center gap-1.5">
-                    <MapPin size={15} aria-hidden />
-                    {nextGathering.location}
-                  </p>
-                )}
-                <Link
-                  href={`/gatherings/${nextGathering.slug}`}
-                  className="mt-5 inline-flex items-center gap-2 text-brand no-underline hover:underline"
-                >
-                  What to expect
-                  <ArrowRight size={15} aria-hidden />
-                </Link>
-              </div>
-            ) : (
-              <div>
-                <p className="m-0 text-step-1 font-medium">Gatherings are being scheduled.</p>
-                <p className="measure m-0 mt-2 text-quiet">
-                  Dates and locations appear here as soon as they are published from the
-                  admin console.
-                </p>
-              </div>
-            )}
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── The three strands, as stacked scenes ──────────────────────────
-          Each holds the viewport while the next slides up over it. Every scene
-          needs an opaque ground or the one beneath shows through — and each
-          gets its own visual world, which is a permission the brand register
-          grants and the product register would not. */}
-      <SceneStack>
-        {STRANDS.map((strand, i) => (
-          <Scene key={strand.title} className={strand.tone}>
-            <div className="shell grid w-full gap-8 py-20 md:grid-cols-[1fr_0.85fr] md:items-center md:gap-16">
-              <div>
-                <h2 className="m-0 text-step-4 max-w-[12ch]">
-                  <SplitWords text={strand.title} />
-                </h2>
-                {/* Staggered behind the heading's own word reveal, so the
-                    block resolves as one gesture rather than four. */}
-                <Reveal from="below" delay={0.14} distance={14}>
-                  <p
-                    className={`m-0 mt-5 text-step-1 ${
-                      strand.tone === "on-brand" ? "quiet-text" : "text-quiet"
-                    }`}
-                  >
-                    {strand.lead}
-                  </p>
-                </Reveal>
-                <Reveal from="below" delay={0.22} distance={14}>
-                  <p className="measure m-0 mt-4">{strand.body}</p>
-                </Reveal>
-                <Reveal from="below" delay={0.3} distance={14}>
-                  <Link
-                    href={strand.href}
-                    className={`mt-8 inline-flex items-center gap-2 underline underline-offset-4 ${
-                      strand.tone === "on-brand"
-                        ? "text-chalk decoration-chalk/40 hover:decoration-chalk"
-                        : "text-brand decoration-transparent hover:decoration-current"
-                    }`}
-                  >
-                    More on {strand.title.toLowerCase()}
-                    <ArrowRight size={15} aria-hidden />
-                  </Link>
-                </Reveal>
-              </div>
-
-              {/* Now shown on mobile too. The scroll-linked drift is pure
-                  transform on a composited layer, so it costs a phone nothing
-                  and it is most of what makes the section feel built. */}
-              <ParallaxMedia
-                className="m-0 aspect-4/5 rounded-(--radius)"
-                drift={5}
-                scaleFrom={1.08}
-              >
-                <CmsImage
-                  media={null}
-                  fallback={strand.photo}
-                  seed={strand.seed}
-                  tone={i === 2 ? "soft" : "deep"}
-                  sizes="(min-width: 768px) 40vw, 100vw"
-                />
-              </ParallaxMedia>
-            </div>
-          </Scene>
-        ))}
-      </SceneStack>
-
-      {/* ── Belonging — held image, copy travelling past ───────────────── */}
-      <PinnedMedia
-        className="section"
-        media={
-          <ParallaxMedia
-            className="m-0 w-full aspect-4/5 max-h-full rounded-(--radius)"
-            drift={7}
-            scaleFrom={1.1}
-          >
-            <CmsImage
-              media={belonging?.media}
-              alt={belonging?.media?.altText ?? "Members of the community together"}
-              seed={19}
-              tone="soft"
-              sizes="(min-width: 768px) 45vw, 100vw"
-            />
-          </ParallaxMedia>
+      {sections.map((section, index) => {
+        switch (section.kind) {
+          case "hero":
+            return <HeroSection key={section.id} section={section} />;
+          case "gathering_preview":
+            return (
+              <GatheringPreviewSection key={section.id} section={section} events={events} />
+            );
+          case "scene":
+            // All scene-kind sections stack together inside one SceneStack,
+            // wherever the first of them falls in sort order.
+            return index === firstSceneIndex ? (
+              <SceneSection key="scenes" sections={sceneSections} />
+            ) : null;
+          case "pinned":
+            return <PinnedSection key={section.id} section={section} />;
+          case "teaching_list":
+            return <TeachingListSection key={section.id} section={section} posts={posts} />;
+          case "cta":
+            return <CtaSection key={section.id} section={section} />;
+          default:
+            return null;
         }
-      >
-        <PinnedPanel>
-          <h2 className="m-0 text-step-4 max-w-[15ch]">
-            <SplitWords
-              text={belonging?.title ?? "You are not a *visitor* here for long."}
-            />
-          </h2>
-          <p className="measure mt-6 text-step-1 text-quiet">
-            {belonging?.body ??
-              "Come once and you are a guest. Come twice and someone will remember your name and ask about the thing you mentioned."}
-          </p>
-        </PinnedPanel>
-
-        <PinnedPanel>
-          <h3 className="m-0 text-step-2 max-w-[18ch]">
-            That is the whole method. There isn&apos;t a programme underneath it.
-          </h3>
-          <p className="measure mt-5 text-quiet">
-            No welcome desk, no visitor card, no follow-up sequence. Just people who were
-            new here recently enough to remember what it felt like.
-          </p>
-          <Link
-            href="/community"
-            className="mt-8 inline-flex items-center gap-2 text-brand no-underline hover:underline"
-          >
-            How we are put together
-            <ArrowRight size={15} aria-hidden />
-          </Link>
-        </PinnedPanel>
-      </PinnedMedia>
-
-      {/* ── Teaching ──────────────────────────────────────────────────────── */}
-      {posts.length > 0 && (
-        <section className="section">
-          <div className="shell">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <h2 className="m-0 text-step-3">
-                <SplitWords text="Recent *teaching*" />
-              </h2>
-              <Link
-                href="/teaching"
-                className="text-brand no-underline hover:underline"
-              >
-                Everything
-              </Link>
-            </div>
-
-            <RevealList className="mt-(--space-block) list-none p-0 m-0 border-t border-hairline">
-              {posts.map((post) => (
-                <RevealItem key={post.slug} className="border-b border-hairline">
-                  <Link
-                    href={`/teaching/${post.slug}`}
-                    className="group grid gap-2 py-7 no-underline md:grid-cols-[0.85fr_1.15fr] md:gap-8"
-                  >
-                    <h3 className="m-0 text-step-2 transition-colors group-hover:text-brand">
-                      {post.title}
-                    </h3>
-                    <div>
-                      {post.excerpt && (
-                        <p className="measure m-0 text-quiet">{post.excerpt}</p>
-                      )}
-                      {post.publishedAt && (
-                        <time
-                          dateTime={post.publishedAt.toISOString()}
-                          className="mt-3 block text-step--1 text-quiet"
-                        >
-                          {new Intl.DateTimeFormat("en-GH", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                            timeZone: "Africa/Accra",
-                          }).format(post.publishedAt)}
-                        </time>
-                      )}
-                    </div>
-                  </Link>
-                </RevealItem>
-              ))}
-            </RevealList>
-          </div>
-        </section>
-      )}
-
-      {/* ── Partnership ───────────────────────────────────────────────────
-          Calm and specific. No countdown, no "just ₵20 will…", no sorrowful
-          photograph. Partnership is participation, and the MoMo mechanics are
-          stated plainly rather than glossed. */}
-      <section className="section bg-surface border-t border-hairline">
-        <div className="shell grid gap-(--space-block) md:grid-cols-[1fr_1fr] md:items-start">
-          <div>
-            <h2 className="m-0 text-step-3 max-w-[16ch]">
-              <SplitWords text="The work is *funded* by the people in it" />
-            </h2>
-            <p className="measure mt-6 text-quiet">
-              Partners give monthly by mobile money. It pays for the room, the sound, the
-              travel, and the people who carry the work through the week.
-            </p>
-          </div>
-
-          <Reveal delay={0.1}>
-            <div className="border border-hairline bg-brand-bg p-8">
-              <h3 className="m-0 text-step-1">How monthly giving works here</h3>
-              <p className="measure mt-3 text-step--1 text-quiet">
-                Mobile money in Ghana cannot charge you automatically — there is no
-                standing authorisation to keep on file. So a monthly pledge is exactly
-                that: we send you a reminder when your month comes round, and you approve
-                the prompt on your own handset. Nothing is ever taken without you.
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link
-                  href="/partnership"
-                  className="inline-flex items-center gap-2 bg-brand text-chalk px-6 py-3.5 font-medium no-underline rounded-[var(--radius)] transition-colors hover:bg-brand-hover"
-                >
-                  Become a partner
-                  <ArrowRight size={16} aria-hidden />
-                </Link>
-                <Link
-                  href="/give"
-                  className="inline-flex items-center px-6 py-3.5 font-medium no-underline border border-hairline rounded-[var(--radius)] transition-colors hover:border-ink"
-                >
-                  Give once
-                </Link>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      })}
     </>
   );
 }

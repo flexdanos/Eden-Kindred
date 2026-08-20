@@ -3,25 +3,16 @@ import { Plus } from "lucide-react";
 import { assertStaff } from "@/lib/auth/guard";
 import { safe } from "@/lib/db/safe";
 import { listContentBlocks } from "@/lib/db/queries/admin-lists";
+import { deleteContentBlock } from "@/app/admin/mutations";
 import { PublishPill } from "@/components/admin/status-pill";
 import { EmptyState } from "@/components/admin/empty-state";
+import { CONTENT_BLOCK_KIND_INFO } from "@/lib/content-block-kinds";
 
 export const dynamic = "force-dynamic";
-
-/**
- * Known slugs the public site reads. Listing them means an admin can see what
- * is missing, rather than having to guess the naming convention.
- */
-const KNOWN_SLUGS = [
-  { slug: "home-hero", where: "Home — the opening screen" },
-  { slug: "home-belonging", where: "Home — the oxblood belonging section" },
-];
 
 export default async function ContentPage() {
   await assertStaff();
   const blocks = await safe("admin-content", () => listContentBlocks(), []);
-  const present = new Set(blocks.map((b) => b.slug));
-  const missing = KNOWN_SLUGS.filter((k) => !present.has(k.slug));
 
   return (
     <div className="max-w-5xl">
@@ -29,8 +20,8 @@ export default async function ContentPage() {
         <div>
           <h1 className="m-0 text-2xl font-semibold tracking-tight">Page sections</h1>
           <p className="m-0 mt-1 text-sm text-muted-foreground">
-            Named blocks the public pages read by slug. Editing one changes the live site
-            once it is published.
+            The homepage renders every published section below, in the order shown. Add,
+            reorder, or remove one and the live site follows once it&apos;s published.
           </p>
         </div>
         <Link
@@ -42,53 +33,48 @@ export default async function ContentPage() {
         </Link>
       </header>
 
-      {missing.length > 0 && (
-        <div className="mb-5 border border-border bg-muted/40 p-4">
-          <h2 className="m-0 text-sm font-semibold">Not set yet</h2>
-          <p className="m-0 mt-1 text-sm text-muted-foreground">
-            These sections have designed fallbacks on the site, so nothing is broken — but
-            they are showing default copy and generated artwork until you fill them in.
-          </p>
-          <ul className="mt-2.5 list-none m-0 p-0 flex flex-col gap-1">
-            {missing.map((m) => (
-              <li key={m.slug} className="text-sm">
-                <Link
-                  href={`/admin/content/new?slug=${m.slug}`}
-                  className="underline underline-offset-2"
-                >
-                  {m.slug}
-                </Link>
-                <span className="text-muted-foreground"> — {m.where}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       {blocks.length === 0 ? (
         <EmptyState
           title="No sections yet"
-          body="The public site renders designed defaults for every section, so it looks complete before you write anything. Create a section to take control of one."
+          body="The homepage has nothing to show until at least one section is created here."
           action={{ href: "/admin/content/new", label: "Create a section" }}
         />
       ) : (
         <ul className="list-none m-0 p-0 border border-border">
           {blocks.map((block) => (
-            <li key={block.id} className="border-b border-border last:border-0">
+            <li
+              key={block.id}
+              className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 last:border-0"
+            >
               <Link
                 href={`/admin/content/${block.id}`}
-                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 no-underline transition-colors duration-150 hover:bg-muted/50"
+                className="min-w-0 flex-1 no-underline hover:opacity-80"
               >
-                <span className="min-w-0">
-                  <span className="block truncate font-mono text-sm">{block.slug}</span>
-                  {block.title && (
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {block.title}
-                    </span>
-                  )}
+                <span className="flex items-center gap-2">
+                  <span className="truncate font-mono text-sm">{block.slug}</span>
+                  <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    {CONTENT_BLOCK_KIND_INFO[block.kind].label}
+                  </span>
                 </span>
-                <PublishPill published={block.isPublished} />
+                {block.title && (
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {block.title}
+                  </span>
+                )}
               </Link>
+              <span className="flex shrink-0 items-center gap-3">
+                <span className="text-xs text-muted-foreground">order {block.sortOrder}</span>
+                <PublishPill published={block.isPublished} />
+                <form action={deleteContentBlock}>
+                  <input type="hidden" name="id" value={block.id} />
+                  <button
+                    type="submit"
+                    className="rounded-md border border-border px-2.5 py-1 text-xs transition-colors duration-150 hover:bg-accent"
+                  >
+                    Delete
+                  </button>
+                </form>
+              </span>
             </li>
           ))}
         </ul>

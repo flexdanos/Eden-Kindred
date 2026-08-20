@@ -58,3 +58,17 @@ export const PLACEHOLDER: Record<"hero" | "worship" | "teaching", PlaceholderIma
     unsplashId: "1673062187663-26bf343b1a79",
   },
 };
+
+/**
+ * Same three stand-ins, keyed by the homepage section slug that uses them
+ * instead of a fixed JSX call site — the homepage now renders an admin-
+ * editable list of sections rather than fixed markup, so a section's fallback
+ * image has to be looked up by its (also admin-assigned) slug. A section with
+ * no entry here falls through to CmsImage's generated brand field, same as
+ * any slug an admin adds later.
+ */
+export const PLACEHOLDER_BY_SLUG: Record<string, PlaceholderImage> = {
+  "home-hero": PLACEHOLDER.hero,
+  "home-scene-worship": PLACEHOLDER.worship,
+  "home-scene-teaching": PLACEHOLDER.teaching,
+};

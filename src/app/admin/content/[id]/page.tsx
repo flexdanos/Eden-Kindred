@@ -36,8 +36,11 @@ export default async function BlockEditorPage({
             ? {
                 id: block.id,
                 slug: block.slug,
+                kind: block.kind,
+                sortOrder: block.sortOrder,
                 title: block.title,
                 body: block.body,
+                data: block.data,
                 mediaId: block.mediaId,
                 isPublished: block.isPublished,
               }

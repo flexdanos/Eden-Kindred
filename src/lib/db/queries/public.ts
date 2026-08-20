@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt, ne, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { publicStorageUrl } from "@/lib/storage";
 import {
@@ -51,6 +51,35 @@ export async function getContentBlock(slug: string) {
 
   return row ?? null;
 }
+
+/**
+ * Every published homepage section, in display order. Unlike `getContentBlock`
+ * this excludes `standalone` blocks (single blocks read by slug elsewhere,
+ * e.g. the community page's intro) — those aren't part of the homepage's
+ * ordered list.
+ */
+export async function getHomeSections() {
+  return db
+    .select({
+      id: contentBlocks.id,
+      slug: contentBlocks.slug,
+      kind: contentBlocks.kind,
+      title: contentBlocks.title,
+      body: contentBlocks.body,
+      data: contentBlocks.data,
+      media: {
+        path: mediaAssets.path,
+        bucket: mediaAssets.bucket,
+        altText: mediaAssets.altText,
+      },
+    })
+    .from(contentBlocks)
+    .leftJoin(mediaAssets, eq(contentBlocks.mediaId, mediaAssets.id))
+    .where(and(eq(contentBlocks.isPublished, true), ne(contentBlocks.kind, "standalone")))
+    .orderBy(asc(contentBlocks.sortOrder));
+}
+
+export type HomeSection = Awaited<ReturnType<typeof getHomeSections>>[number];
 
 export async function getPublishedPosts(limit = 12) {
   return db

@@ -68,6 +68,22 @@ export const teamResourceKindEnum = pgEnum("team_resource_kind", [
 ]);
 
 /**
+ * `standalone` is a single title/body/image block read by slug (e.g. the
+ * community page's intro) — unchanged behaviour from before this enum
+ * existed. The rest are homepage sections: `kind` tells the homepage which
+ * template to render, and `sortOrder` (below) tells it in what order.
+ */
+export const contentBlockKindEnum = pgEnum("content_block_kind", [
+  "standalone",
+  "hero",
+  "scene",
+  "pinned",
+  "cta",
+  "gathering_preview",
+  "teaching_list",
+]);
+
+/**
  * How a gift reached us.
  *
  * `paystack` is the only automated rail — it verifies and writes itself.
@@ -124,10 +140,15 @@ export const mediaAssets = pgTable("media_assets", {
 export const contentBlocks = pgTable("content_blocks", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(), // 'home-hero', 'partnership-intro', ...
+  kind: contentBlockKindEnum("kind").notNull().default("standalone"),
+  // Where a homepage section falls relative to the others. Irrelevant for
+  // `standalone` blocks, which are looked up individually by slug.
+  sortOrder: integer("sort_order").notNull().default(0),
   title: text("title"),
   body: text("body"),
-  // Flexible structured fields: CTA links, layout variant, and — deliberately —
-  // enough room to layer section ordering on later without a migration.
+  // Structured, kind-specific fields (button labels/hrefs, a second panel's
+  // copy, list limits, empty-state text, ...) — see
+  // src/lib/content-block-kinds.ts for the shape per kind.
   data: jsonb("data").$type<Record<string, unknown>>(),
   mediaId: uuid("media_id").references(() => mediaAssets.id, { onDelete: "set null" }),
   isPublished: boolean("is_published").notNull().default(false),

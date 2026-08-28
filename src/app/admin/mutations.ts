@@ -10,6 +10,8 @@ import {
   events,
   partnershipTiers,
   posts,
+  programComments,
+  programGallery,
   releaseTracks,
   releases,
   siteSettings,
@@ -17,6 +19,7 @@ import {
 } from "@/lib/db/schema";
 import { requireStaff, requireAdmin } from "@/lib/auth/guard";
 import { toMinor } from "@/lib/money";
+import { CONTENT_BLOCK_DATA_FIELDS, CONTENT_BLOCK_KINDS } from "@/lib/content-block-kinds";
 
 /**
  * Every mutation in this file begins with requireStaff() or requireAdmin().
@@ -58,13 +61,31 @@ function slugify(input: string): string {
 
 // ── Content blocks ───────────────────────────────────────────────────────
 
+const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal(""));
+
 const blockSchema = z.object({
   id: z.string().uuid().optional().or(z.literal("")),
   slug: z.string().trim().min(2).max(80),
-  title: z.string().trim().max(200).optional().or(z.literal("")),
-  body: z.string().max(20_000).optional().or(z.literal("")),
+  kind: z.enum(CONTENT_BLOCK_KINDS),
+  sortOrder: z.string().optional().or(z.literal("")),
+  title: optionalText(200),
+  body: optionalText(20_000),
   mediaId: optionalUuid,
   isPublished: z.union([z.literal("on"), z.literal("")]).optional(),
+  // Kind-specific fields, folded into `data` below. Always present in the
+  // form; which ones actually get saved depends on the selected `kind`.
+  primaryLabel: optionalText(80),
+  primaryHref: optionalText(300),
+  secondaryLabel: optionalText(80),
+  secondaryHref: optionalText(300),
+  lead: optionalText(200),
+  linkLabel: optionalText(80),
+  linkHref: optionalText(300),
+  secondaryTitle: optionalText(200),
+  secondaryBody: optionalText(4000),
+  emptyTitle: optionalText(200),
+  emptyBody: optionalText(400),
+  limit: optionalText(4),
 });
 
 export async function saveContentBlock(
@@ -83,14 +104,25 @@ export async function saveContentBlock(
     };
   }
 
-  const { id, slug, title, body, mediaId, isPublished } = parsed.data;
-  const published = isPublished === "on";
+  const d = parsed.data;
+  const published = d.isPublished === "on";
+
+  const data: Record<string, unknown> = {};
+  for (const field of CONTENT_BLOCK_DATA_FIELDS[d.kind]) {
+    const value = d[field as keyof typeof d];
+    if (typeof value === "string" && value.trim()) {
+      data[field] = field === "limit" ? Number(value) : value.trim();
+    }
+  }
 
   const values = {
-    slug: slugify(slug),
-    title: title || null,
-    body: body || null,
-    mediaId,
+    slug: slugify(d.slug),
+    kind: d.kind,
+    sortOrder: Number(d.sortOrder || 0),
+    title: d.title || null,
+    body: d.body || null,
+    data,
+    mediaId: d.mediaId,
     isPublished: published,
     publishedAt: published ? new Date() : null,
     updatedBy: auth.user.id,
@@ -98,8 +130,8 @@ export async function saveContentBlock(
   };
 
   try {
-    if (id) {
-      await db.update(contentBlocks).set(values).where(eq(contentBlocks.id, id));
+    if (d.id) {
+      await db.update(contentBlocks).set(values).where(eq(contentBlocks.id, d.id));
     } else {
       await db.insert(contentBlocks).values(values);
     }
@@ -111,6 +143,18 @@ export async function saveContentBlock(
   revalidatePath("/admin/content");
   revalidatePath("/");
   return ok(published ? "Saved and published." : "Saved as a draft.");
+}
+
+export async function deleteContentBlock(formData: FormData): Promise<void> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return;
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await db.delete(contentBlocks).where(eq(contentBlocks.id, id));
+  revalidatePath("/admin/content");
+  revalidatePath("/");
 }
 
 // ── Posts ────────────────────────────────────────────────────────────────
@@ -181,9 +225,14 @@ export async function deletePost(formData: FormData): Promise<void> {
   revalidatePath("/teaching");
 }
 
-// ── Events ───────────────────────────────────────────────────────────────
+// ── Programs (gatherings, services, sessions) ───────────────────────────
 
-const eventSchema = z.object({
+const galleryItemSchema = z.object({
+  mediaId: z.string().uuid(),
+  caption: z.string().trim().max(300).optional().or(z.literal("")),
+});
+
+const programSchema = z.object({
   id: z.string().uuid().optional().or(z.literal("")),
   title: z.string().trim().min(2, "Give it a title").max(200),
   slug: z.string().trim().max(80).optional().or(z.literal("")),
@@ -193,16 +242,18 @@ const eventSchema = z.object({
   endsAt: z.string().optional().or(z.literal("")),
   coverMediaId: optionalUuid,
   isPublished: z.union([z.literal("on"), z.literal("")]).optional(),
+  /** JSON-encoded, ordered array written by GalleryPicker. */
+  gallery: z.string().optional().or(z.literal("")),
 });
 
-export async function saveEvent(
+export async function saveProgram(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
   const auth = await requireStaff();
   if (!auth.ok) return fail(auth.error);
 
-  const parsed = eventSchema.safeParse(Object.fromEntries(formData));
+  const parsed = programSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return {
       ok: false,
@@ -211,7 +262,7 @@ export async function saveEvent(
     };
   }
 
-  const { id, title, slug, description, location, startsAt, endsAt, coverMediaId, isPublished } =
+  const { id, title, slug, description, location, startsAt, endsAt, coverMediaId, isPublished, gallery } =
     parsed.data;
 
   const start = new Date(startsAt);
@@ -219,6 +270,15 @@ export async function saveEvent(
 
   if (Number.isNaN(start.getTime())) return fail("That start time isn't a valid date.");
   if (end && end < start) return fail("The end time is before the start time.");
+
+  let galleryItems: z.infer<typeof galleryItemSchema>[] = [];
+  if (gallery) {
+    try {
+      galleryItems = z.array(galleryItemSchema).max(30).parse(JSON.parse(gallery));
+    } catch {
+      return fail("The gallery selection got corrupted. Try again.");
+    }
+  }
 
   const values = {
     title,
@@ -232,17 +292,58 @@ export async function saveEvent(
   };
 
   try {
-    if (id) await db.update(events).set(values).where(eq(events.id, id));
-    else await db.insert(events).values(values);
+    let programId = id || null;
+
+    if (programId) {
+      await db.update(events).set(values).where(eq(events.id, programId));
+    } else {
+      const [row] = await db.insert(events).values(values).returning({ id: events.id });
+      programId = row.id;
+    }
+
+    // Replaced wholesale rather than diffed — same reasoning as release tracks:
+    // a short ordered list from a form is simpler to replace than to diff.
+    await db.delete(programGallery).where(eq(programGallery.eventId, programId));
+
+    if (galleryItems.length > 0) {
+      await db.insert(programGallery).values(
+        galleryItems.map((item, i) => ({
+          eventId: programId!,
+          mediaId: item.mediaId,
+          caption: item.caption || null,
+          sortOrder: i,
+        })),
+      );
+    }
   } catch (error) {
-    console.error("[admin] saveEvent", error);
+    console.error("[admin] saveProgram", error);
     return fail("That slug is already taken, or the save failed.");
   }
 
-  revalidatePath("/admin/events");
-  revalidatePath("/gatherings");
+  revalidatePath("/admin/programs");
+  revalidatePath("/programs");
   revalidatePath("/");
   return ok(isPublished === "on" ? "Published." : "Saved as a draft.");
+}
+
+export async function deleteProgramComment(formData: FormData): Promise<void> {
+  const auth = await requireStaff();
+  if (!auth.ok) return;
+
+  const id = String(formData.get("id") ?? "");
+  const eventId = String(formData.get("eventId") ?? "");
+  if (!id || !eventId) return;
+
+  const [event] = await db
+    .select({ slug: events.slug })
+    .from(events)
+    .where(eq(events.id, eventId))
+    .limit(1);
+
+  await db.delete(programComments).where(eq(programComments.id, id));
+
+  revalidatePath(`/admin/programs/${eventId}`);
+  if (event) revalidatePath(`/programs/${event.slug}`);
 }
 
 // ── Partnership tiers ────────────────────────────────────────────────────

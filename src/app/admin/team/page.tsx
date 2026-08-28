@@ -1,6 +1,6 @@
 import { assertStaff } from "@/lib/auth/guard";
 import { safe } from "@/lib/db/safe";
-import { listEvents, listMediaAssets, listTeamResources } from "@/lib/db/queries/admin-lists";
+import { listPrograms, listMediaAssets, listTeamResources } from "@/lib/db/queries/admin-lists";
 import { deleteTeamResource } from "@/app/admin/mutations";
 import { EmptyState } from "@/components/admin/empty-state";
 import { TeamResourceForm } from "./team-form";
@@ -26,7 +26,7 @@ export default async function AdminTeamPage() {
   const [resources, assets, events] = await Promise.all([
     safe("admin-team", () => listTeamResources(), []),
     safe("admin-media", () => listMediaAssets(), []),
-    safe("admin-events", () => listEvents(), []),
+    safe("admin-programs", () => listPrograms(), []),
   ]);
 
   return (

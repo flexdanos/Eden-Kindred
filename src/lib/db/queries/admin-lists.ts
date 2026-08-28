@@ -8,6 +8,8 @@ import {
   mediaAssets,
   partnershipTiers,
   posts,
+  programComments,
+  programGallery,
   releaseTracks,
   releases,
   siteSettings,
@@ -24,13 +26,15 @@ export async function listContentBlocks() {
     .select({
       id: contentBlocks.id,
       slug: contentBlocks.slug,
+      kind: contentBlocks.kind,
+      sortOrder: contentBlocks.sortOrder,
       title: contentBlocks.title,
       body: contentBlocks.body,
       isPublished: contentBlocks.isPublished,
       updatedAt: contentBlocks.updatedAt,
     })
     .from(contentBlocks)
-    .orderBy(asc(contentBlocks.slug));
+    .orderBy(asc(contentBlocks.sortOrder), asc(contentBlocks.slug));
 }
 
 export async function getContentBlockById(id: string) {
@@ -58,7 +62,7 @@ export async function getPostById(id: string) {
   return row ?? null;
 }
 
-export async function listEvents() {
+export async function listPrograms() {
   return db
     .select({
       id: events.id,
@@ -73,9 +77,36 @@ export async function listEvents() {
     .orderBy(desc(events.startsAt));
 }
 
-export async function getEventById(id: string) {
+export async function getProgramById(id: string) {
   const [row] = await db.select().from(events).where(eq(events.id, id)).limit(1);
-  return row ?? null;
+  if (!row) return null;
+
+  const gallery = await db
+    .select({
+      id: programGallery.id,
+      mediaId: programGallery.mediaId,
+      caption: programGallery.caption,
+      sortOrder: programGallery.sortOrder,
+    })
+    .from(programGallery)
+    .where(eq(programGallery.eventId, id))
+    .orderBy(asc(programGallery.sortOrder));
+
+  return { ...row, gallery };
+}
+
+/** Comments for the admin edit page — newest first, so recent activity surfaces immediately. */
+export async function listProgramComments(eventId: string) {
+  return db
+    .select({
+      id: programComments.id,
+      authorName: programComments.authorName,
+      body: programComments.body,
+      createdAt: programComments.createdAt,
+    })
+    .from(programComments)
+    .where(eq(programComments.eventId, eventId))
+    .orderBy(desc(programComments.createdAt));
 }
 
 export async function listTiers() {

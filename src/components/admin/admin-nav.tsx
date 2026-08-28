@@ -43,7 +43,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/admin/content", label: "Page sections", icon: LayoutTemplate },
       { href: "/admin/posts", label: "Teaching", icon: FileText },
-      { href: "/admin/events", label: "Gatherings", icon: CalendarDays },
+      { href: "/admin/programs", label: "Programs", icon: CalendarDays },
       { href: "/admin/releases", label: "Music", icon: Disc3 },
       { href: "/admin/media", label: "Media", icon: ImageIcon },
     ],

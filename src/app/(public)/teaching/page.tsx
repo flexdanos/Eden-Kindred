@@ -32,7 +32,7 @@ export default async function TeachingPage() {
           </h1>
           <Reveal from="below" delay={0.3}>
             <p className="measure mt-8 text-step-1 text-quiet">
-              Writing from the gatherings and around them. None of it is the last word on
+              Writing from the programs and around them. None of it is the last word on
               anything; that is rather the point.
             </p>
           </Reveal>

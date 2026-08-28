@@ -36,7 +36,7 @@ export function TeamResourceForm({
             </Field>
 
             <Field
-              label="For which gathering"
+              label="For which program"
               name="eventId"
               hint="Optional. Scoping it here files it under 'coming up'."
               errors={state.fieldErrors?.eventId}

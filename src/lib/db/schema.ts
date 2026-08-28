@@ -68,6 +68,22 @@ export const teamResourceKindEnum = pgEnum("team_resource_kind", [
 ]);
 
 /**
+ * `standalone` is a single title/body/image block read by slug (e.g. the
+ * community page's intro) — unchanged behaviour from before this enum
+ * existed. The rest are homepage sections: `kind` tells the homepage which
+ * template to render, and `sortOrder` (below) tells it in what order.
+ */
+export const contentBlockKindEnum = pgEnum("content_block_kind", [
+  "standalone",
+  "hero",
+  "scene",
+  "pinned",
+  "cta",
+  "gathering_preview",
+  "teaching_list",
+]);
+
+/**
  * How a gift reached us.
  *
  * `paystack` is the only automated rail — it verifies and writes itself.
@@ -124,10 +140,15 @@ export const mediaAssets = pgTable("media_assets", {
 export const contentBlocks = pgTable("content_blocks", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(), // 'home-hero', 'partnership-intro', ...
+  kind: contentBlockKindEnum("kind").notNull().default("standalone"),
+  // Where a homepage section falls relative to the others. Irrelevant for
+  // `standalone` blocks, which are looked up individually by slug.
+  sortOrder: integer("sort_order").notNull().default(0),
   title: text("title"),
   body: text("body"),
-  // Flexible structured fields: CTA links, layout variant, and — deliberately —
-  // enough room to layer section ordering on later without a migration.
+  // Structured, kind-specific fields (button labels/hrefs, a second panel's
+  // copy, list limits, empty-state text, ...) — see
+  // src/lib/content-block-kinds.ts for the shape per kind.
   data: jsonb("data").$type<Record<string, unknown>>(),
   mediaId: uuid("media_id").references(() => mediaAssets.id, { onDelete: "set null" }),
   isPublished: boolean("is_published").notNull().default(false),
@@ -157,7 +178,7 @@ export const posts = pgTable(
   (t) => [index("posts_published_idx").on(t.isPublished, t.publishedAt)],
 );
 
-// ── Events (gatherings, services, sessions) ─────────────────────────────
+// ── Events (public-facing "Programs" — table kept as `events`) ──────────
 
 export const events = pgTable(
   "events",
@@ -176,6 +197,44 @@ export const events = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index("events_starts_at_idx").on(t.startsAt)],
+);
+
+// ── Program gallery (photos for a program, past or upcoming) ───────────
+
+export const programGallery = pgTable(
+  "program_gallery",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    mediaId: uuid("media_id")
+      .notNull()
+      .references(() => mediaAssets.id, { onDelete: "cascade" }),
+    caption: text("caption"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("program_gallery_event_idx").on(t.eventId, t.sortOrder),
+    uniqueIndex("program_gallery_unique_media").on(t.eventId, t.mediaId),
+  ],
+);
+
+// ── Program comments (public, unauthenticated) ──────────────────────────
+
+export const programComments = pgTable(
+  "program_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    authorName: text("author_name").notNull(),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("program_comments_event_idx").on(t.eventId, t.createdAt)],
 );
 
 // ── Partnership tiers ───────────────────────────────────────────────────
@@ -365,7 +424,7 @@ export const teamResources = pgTable(
     /** Chord chart PDF, rehearsal audio, or similar, in Supabase Storage. */
     mediaId: uuid("media_id").references(() => mediaAssets.id, { onDelete: "set null" }),
     externalUrl: text("external_url"),
-    /** Optionally scoped to the gathering it is being prepared for. */
+    /** Optionally scoped to the program it is being prepared for. */
     eventId: uuid("event_id").references(() => events.id, { onDelete: "set null" }),
     createdBy: uuid("created_by").references(() => profiles.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -421,8 +480,19 @@ export const postsRelations = relations(posts, ({ one }) => ({
   coverMedia: one(mediaAssets, { fields: [posts.coverMediaId], references: [mediaAssets.id] }),
 }));
 
-export const eventsRelations = relations(events, ({ one }) => ({
+export const eventsRelations = relations(events, ({ one, many }) => ({
   coverMedia: one(mediaAssets, { fields: [events.coverMediaId], references: [mediaAssets.id] }),
+  gallery: many(programGallery),
+  comments: many(programComments),
+}));
+
+export const programGalleryRelations = relations(programGallery, ({ one }) => ({
+  event: one(events, { fields: [programGallery.eventId], references: [events.id] }),
+  media: one(mediaAssets, { fields: [programGallery.mediaId], references: [mediaAssets.id] }),
+}));
+
+export const programCommentsRelations = relations(programComments, ({ one }) => ({
+  event: one(events, { fields: [programComments.eventId], references: [events.id] }),
 }));
 
 export const partnershipTiersRelations = relations(partnershipTiers, ({ many }) => ({

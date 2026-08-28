@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     template: "%s · Eden Kindred",
   },
   description:
-    "A community you belong to, not an audience you join. Gatherings, teaching, and partnership.",
+    "A community you belong to, not an audience you join. Programs, teaching, and partnership.",
   openGraph: {
     type: "website",
     siteName: "Eden Kindred",

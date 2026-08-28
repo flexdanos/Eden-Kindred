@@ -8,7 +8,7 @@ import { Menu, X } from "lucide-react";
 const NAV = [
   { href: "/music", label: "Music" },
   { href: "/community", label: "Community" },
-  { href: "/gatherings", label: "Gatherings" },
+  { href: "/programs", label: "Programs" },
   { href: "/teaching", label: "Teaching" },
   { href: "/partnership", label: "Partnership" },
 ];

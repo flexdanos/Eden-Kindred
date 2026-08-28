@@ -43,7 +43,7 @@ values (
   'home-scene-worship', 'scene', 30,
   'Worship',
   'The gathering is the practice, not the warm-up to one. If you are new, this is the part where you can simply stand and listen. Nobody is counting.',
-  '{"lead":"Sung and spoken, unhurried.","linkHref":"/gatherings"}'::jsonb,
+  '{"lead":"Sung and spoken, unhurried.","linkHref":"/programs"}'::jsonb,
   true, now()
 )
 on conflict (slug) do update set kind = excluded.kind, sort_order = excluded.sort_order, data = excluded.data;

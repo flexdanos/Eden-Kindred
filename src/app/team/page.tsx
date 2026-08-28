@@ -43,7 +43,7 @@ export default async function TeamPage() {
         <div className="shell">
           <p className="m-0 text-step--1 uppercase tracking-wider text-quiet">Musicians</p>
           <h1 className="m-0 mt-3 text-step-4 max-w-[18ch]">
-            Everything for the next <em>gathering</em>
+            Everything for the next <em>program</em>
           </h1>
           <p className="measure mt-5 text-quiet">
             Signed in as {user.fullName ?? user.email}

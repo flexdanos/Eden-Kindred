@@ -59,7 +59,7 @@ export default async function PartnershipPage() {
               {
                 item: "Travel",
                 detail:
-                  "Getting the team to gatherings, and getting people into the rooms where kinship groups meet.",
+                  "Getting the team to programs, and getting people into the rooms where kinship groups meet.",
               },
               {
                 item: "The people carrying it midweek",

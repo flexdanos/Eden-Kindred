@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 const RHYTHMS = [
   {
     when: "Sunday",
-    what: "The gathering",
+    what: "The program",
     detail:
       "Everyone, in one room. Sung and spoken worship, then teaching. Around two hours, and there is tea afterwards.",
   },
@@ -125,7 +125,7 @@ export default async function CommunityPage() {
             href="/join"
             className="mt-8 inline-flex items-center gap-2 bg-brand text-chalk px-7 py-4 font-medium no-underline rounded-(--radius) transition-colors hover:bg-brand-hover"
           >
-            Come to a gathering
+            Come to a program
             <ArrowRight size={16} aria-hidden />
           </Link>
         </PinnedPanel>

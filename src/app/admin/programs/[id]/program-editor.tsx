@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { Field, SaveForm, inputClass } from "@/components/admin/save-form";
 import { MediaPicker, type PickableAsset } from "@/components/admin/media-picker";
-import { saveEvent } from "@/app/admin/mutations";
+import { GalleryPicker } from "@/components/admin/gallery-picker";
+import { saveProgram } from "@/app/admin/mutations";
 
 type EventRow = {
   id: string;
@@ -15,6 +16,7 @@ type EventRow = {
   endsAt: Date | null;
   coverMediaId: string | null;
   isPublished: boolean;
+  gallery?: { mediaId: string; caption: string | null }[];
 };
 
 /** datetime-local wants `YYYY-MM-DDTHH:mm` in LOCAL time, with no zone suffix. */
@@ -26,7 +28,7 @@ function toLocalInput(date: Date | null): string {
   )}:${pad(date.getMinutes())}`;
 }
 
-export function EventEditor({
+export function ProgramEditor({
   event,
   assets,
 }: {
@@ -34,7 +36,7 @@ export function EventEditor({
   assets: PickableAsset[];
 }) {
   return (
-    <SaveForm action={saveEvent} submitLabel={event ? "Save changes" : "Create gathering"}>
+    <SaveForm action={saveProgram} submitLabel={event ? "Save changes" : "Create program"}>
       {(state) => (
         <>
           {event && <input type="hidden" name="id" value={event.id} />}
@@ -56,7 +58,7 @@ export function EventEditor({
             errors={state.fieldErrors?.slug}
           >
             <div className="flex items-center gap-1.5">
-              <span className="shrink-0 text-sm text-muted-foreground">/gatherings/</span>
+              <span className="shrink-0 text-sm text-muted-foreground">/programs/</span>
               <input
                 id="slug"
                 name="slug"
@@ -127,6 +129,13 @@ export function EventEditor({
             label="Cover image"
           />
 
+          <GalleryPicker
+            name="gallery"
+            assets={assets}
+            defaultItems={event?.gallery ?? []}
+            label="Photo gallery"
+          />
+
           <label className="flex items-center gap-2.5 text-sm">
             <input
               type="checkbox"
@@ -145,10 +154,10 @@ export function EventEditor({
 export function BackLink() {
   return (
     <Link
-      href="/admin/events"
+      href="/admin/programs"
       className="text-sm text-muted-foreground no-underline hover:text-foreground"
     >
-      ← All gatherings
+      ← All programs
     </Link>
   );
 }

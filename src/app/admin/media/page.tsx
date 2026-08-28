@@ -37,7 +37,7 @@ export default async function MediaPage() {
         {assets.length === 0 ? (
           <EmptyState
             title="Nothing uploaded yet"
-            body="Upload the real photographs of your gatherings. Images go straight from this browser to Supabase Storage — they never pass through the app server, so large files upload at full speed."
+            body="Upload the real photographs of your programs. Images go straight from this browser to Supabase Storage — they never pass through the app server, so large files upload at full speed."
           />
         ) : (
           <MediaGrid assets={assets} />

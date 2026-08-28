@@ -178,7 +178,7 @@ export const posts = pgTable(
   (t) => [index("posts_published_idx").on(t.isPublished, t.publishedAt)],
 );
 
-// ── Events (gatherings, services, sessions) ─────────────────────────────
+// ── Events (public-facing "Programs" — table kept as `events`) ──────────
 
 export const events = pgTable(
   "events",
@@ -197,6 +197,44 @@ export const events = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index("events_starts_at_idx").on(t.startsAt)],
+);
+
+// ── Program gallery (photos for a program, past or upcoming) ───────────
+
+export const programGallery = pgTable(
+  "program_gallery",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    mediaId: uuid("media_id")
+      .notNull()
+      .references(() => mediaAssets.id, { onDelete: "cascade" }),
+    caption: text("caption"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("program_gallery_event_idx").on(t.eventId, t.sortOrder),
+    uniqueIndex("program_gallery_unique_media").on(t.eventId, t.mediaId),
+  ],
+);
+
+// ── Program comments (public, unauthenticated) ──────────────────────────
+
+export const programComments = pgTable(
+  "program_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    authorName: text("author_name").notNull(),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("program_comments_event_idx").on(t.eventId, t.createdAt)],
 );
 
 // ── Partnership tiers ───────────────────────────────────────────────────
@@ -386,7 +424,7 @@ export const teamResources = pgTable(
     /** Chord chart PDF, rehearsal audio, or similar, in Supabase Storage. */
     mediaId: uuid("media_id").references(() => mediaAssets.id, { onDelete: "set null" }),
     externalUrl: text("external_url"),
-    /** Optionally scoped to the gathering it is being prepared for. */
+    /** Optionally scoped to the program it is being prepared for. */
     eventId: uuid("event_id").references(() => events.id, { onDelete: "set null" }),
     createdBy: uuid("created_by").references(() => profiles.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -442,8 +480,19 @@ export const postsRelations = relations(posts, ({ one }) => ({
   coverMedia: one(mediaAssets, { fields: [posts.coverMediaId], references: [mediaAssets.id] }),
 }));
 
-export const eventsRelations = relations(events, ({ one }) => ({
+export const eventsRelations = relations(events, ({ one, many }) => ({
   coverMedia: one(mediaAssets, { fields: [events.coverMediaId], references: [mediaAssets.id] }),
+  gallery: many(programGallery),
+  comments: many(programComments),
+}));
+
+export const programGalleryRelations = relations(programGallery, ({ one }) => ({
+  event: one(events, { fields: [programGallery.eventId], references: [events.id] }),
+  media: one(mediaAssets, { fields: [programGallery.mediaId], references: [mediaAssets.id] }),
+}));
+
+export const programCommentsRelations = relations(programComments, ({ one }) => ({
+  event: one(events, { fields: [programComments.eventId], references: [events.id] }),
 }));
 
 export const partnershipTiersRelations = relations(partnershipTiers, ({ many }) => ({

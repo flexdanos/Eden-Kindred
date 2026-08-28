@@ -1,11 +1,11 @@
 import { CtaSection } from "@/components/home-sections/cta-section";
-import { GatheringPreviewSection } from "@/components/home-sections/gathering-preview-section";
+import { ProgramPreviewSection } from "@/components/home-sections/program-preview-section";
 import { HeroSection } from "@/components/home-sections/hero-section";
 import { PinnedSection } from "@/components/home-sections/pinned-section";
 import { SceneSection } from "@/components/home-sections/scene-section";
 import { TeachingListSection } from "@/components/home-sections/teaching-list-section";
 import { safe } from "@/lib/db/safe";
-import { getHomeSections, getPublishedPosts, getUpcomingEvents } from "@/lib/db/queries/public";
+import { getHomeSections, getPublishedPosts, getUpcomingPrograms } from "@/lib/db/queries/public";
 
 export const revalidate = 300;
 
@@ -18,7 +18,7 @@ export const revalidate = 300;
 export default async function HomePage() {
   const [sections, events, posts] = await Promise.all([
     safe("home-sections", () => getHomeSections(), []),
-    safe("upcoming-events", () => getUpcomingEvents(3), []),
+    safe("upcoming-programs", () => getUpcomingPrograms(3), []),
     safe("recent-posts", () => getPublishedPosts(3), []),
   ]);
 
@@ -33,7 +33,7 @@ export default async function HomePage() {
             return <HeroSection key={section.id} section={section} />;
           case "gathering_preview":
             return (
-              <GatheringPreviewSection key={section.id} section={section} events={events} />
+              <ProgramPreviewSection key={section.id} section={section} events={events} />
             );
           case "scene":
             // All scene-kind sections stack together inside one SceneStack,

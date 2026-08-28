@@ -237,8 +237,8 @@ export default async function AdminDashboard() {
               </Link>
             )}
             {counts.events.drafts > 0 && (
-              <Link href="/admin/events" className="underline underline-offset-2">
-                {counts.events.drafts} gatherings
+              <Link href="/admin/programs" className="underline underline-offset-2">
+                {counts.events.drafts} programs
               </Link>
             )}
           </div>

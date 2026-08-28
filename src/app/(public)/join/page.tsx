@@ -4,17 +4,17 @@ import { ArrowRight, Clock, MapPin } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { SplitWords } from "@/components/split-words";
 import { safe } from "@/lib/db/safe";
-import { getUpcomingEvents } from "@/lib/db/queries/public";
+import { getUpcomingPrograms } from "@/lib/db/queries/public";
 
 export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Join us",
   description:
-    "Come to a gathering of the Eden Kindred worship community in Accra. No sign-up, no visitor card.",
+    "Come to a program of the Eden Kindred worship community in Accra. No sign-up, no visitor card.",
 };
 
-const gatheringTime = new Intl.DateTimeFormat("en-GH", {
+const programTime = new Intl.DateTimeFormat("en-GH", {
   weekday: "long",
   day: "numeric",
   month: "long",
@@ -25,7 +25,7 @@ const gatheringTime = new Intl.DateTimeFormat("en-GH", {
 });
 
 export default async function JoinPage() {
-  const events = await safe("join-events", () => getUpcomingEvents(4), []);
+  const events = await safe("join-programs", () => getUpcomingPrograms(4), []);
 
   return (
     <>
@@ -47,7 +47,7 @@ export default async function JoinPage() {
       <section className="section border-t border-hairline">
         <div className="shell">
           <h2 className="m-0 text-step-3 max-w-[16ch]">
-            <SplitWords text="The next few *gatherings*" />
+            <SplitWords text="The next few *programs*" />
           </h2>
 
           {events.length > 0 ? (
@@ -56,7 +56,7 @@ export default async function JoinPage() {
                 <li key={event.slug} className="border-b border-hairline">
                   <Reveal from="below" delay={i * 0.06}>
                     <Link
-                      href={`/gatherings/${event.slug}`}
+                      href={`/programs/${event.slug}`}
                       className="group grid gap-2 py-8 no-underline md:grid-cols-[1fr_1.2fr] md:gap-8"
                     >
                       <h3 className="m-0 text-step-2 transition-colors group-hover:text-brand">
@@ -65,7 +65,7 @@ export default async function JoinPage() {
                       <div className="text-quiet">
                         <p className="m-0 inline-flex items-center gap-2">
                           <Clock size={15} aria-hidden />
-                          {gatheringTime.format(event.startsAt)}
+                          {programTime.format(event.startsAt)}
                         </p>
                         {event.location && (
                           <p className="m-0 mt-1 inline-flex items-center gap-2">
@@ -123,10 +123,10 @@ export default async function JoinPage() {
           <Reveal from="below" delay={0.25}>
             <div className="mt-(--space-block) flex flex-wrap gap-3">
               <Link
-                href="/gatherings"
+                href="/programs"
                 className="inline-flex items-center gap-2 bg-chalk text-ink px-7 py-4 font-medium no-underline rounded-(--radius) transition-transform duration-(--dur-fast) hover:-translate-y-0.5"
               >
-                See all gatherings
+                See all programs
                 <ArrowRight size={16} aria-hidden />
               </Link>
               <Link

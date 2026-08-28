@@ -3,15 +3,16 @@ import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { SplitWords } from "@/components/split-words";
+import { ProgramStatusBadge } from "@/components/program-status-badge";
 import { safe } from "@/lib/db/safe";
-import { getPastEvents, getUpcomingEvents } from "@/lib/db/queries/public";
+import { getPastPrograms, getUpcomingPrograms } from "@/lib/db/queries/public";
 
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Gatherings",
+  title: "Programs",
   description:
-    "Upcoming gatherings of the Eden Kindred worship community, with times in Accra local time.",
+    "Upcoming and past programs of the Eden Kindred worship community, with times in Accra local time.",
 };
 
 const full = new Intl.DateTimeFormat("en-GH", {
@@ -31,10 +32,10 @@ const short = new Intl.DateTimeFormat("en-GH", {
   timeZone: "Africa/Accra",
 });
 
-export default async function GatheringsPage() {
+export default async function ProgramsPage() {
   const [upcoming, past] = await Promise.all([
-    safe("gatherings-upcoming", () => getUpcomingEvents(20), []),
-    safe("gatherings-past", () => getPastEvents(10), []),
+    safe("programs-upcoming", () => getUpcomingPrograms(20), []),
+    safe("programs-past", () => getPastPrograms(10), []),
   ]);
 
   return (
@@ -42,7 +43,7 @@ export default async function GatheringsPage() {
       <section className="section">
         <div className="shell">
           <h1 className="m-0 text-step-5 max-w-[14ch]">
-            <SplitWords text="When we *gather*" />
+            <SplitWords text="Our *programs*" />
           </h1>
           <Reveal from="below" delay={0.3}>
             <p className="measure mt-8 text-step-1 text-quiet">
@@ -66,13 +67,16 @@ export default async function GatheringsPage() {
                 <li key={event.slug} className="border-b border-hairline">
                   <Reveal from="below" delay={Math.min(i, 5) * 0.05}>
                     <Link
-                      href={`/gatherings/${event.slug}`}
+                      href={`/programs/${event.slug}`}
                       className="group grid gap-2 py-8 no-underline md:grid-cols-[0.8fr_1.2fr] md:gap-8"
                     >
                       <div>
-                        <h3 className="m-0 text-step-2 transition-colors group-hover:text-brand">
-                          {event.title}
-                        </h3>
+                        <div className="flex items-center gap-2.5">
+                          <h3 className="m-0 text-step-2 transition-colors group-hover:text-brand">
+                            {event.title}
+                          </h3>
+                          <ProgramStatusBadge isPast={false} />
+                        </div>
                         <p className="m-0 mt-2 text-step--1 text-quiet tabular-nums">
                           {full.format(event.startsAt)}
                         </p>
@@ -114,10 +118,13 @@ export default async function GatheringsPage() {
               {past.map((event) => (
                 <li key={event.slug}>
                   <Link
-                    href={`/gatherings/${event.slug}`}
+                    href={`/programs/${event.slug}`}
                     className="flex flex-wrap items-baseline justify-between gap-3 border-b border-hairline py-3 no-underline hover:text-brand transition-colors"
                   >
-                    <span>{event.title}</span>
+                    <span className="inline-flex items-center gap-2.5">
+                      {event.title}
+                      <ProgramStatusBadge isPast />
+                    </span>
                     <span className="text-step--1 text-quiet tabular-nums">
                       {short.format(event.startsAt)}
                     </span>

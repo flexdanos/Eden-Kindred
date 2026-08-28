@@ -10,6 +10,8 @@ import {
   mediaAssets,
   partnershipTiers,
   posts,
+  programComments,
+  programGallery,
   releaseTracks,
   releases,
   siteSettings,
@@ -123,8 +125,8 @@ export async function getPostBySlug(slug: string) {
   return row ?? null;
 }
 
-/** Gatherings that haven't finished yet, soonest first. */
-export async function getUpcomingEvents(limit = 6) {
+/** Programs that haven't finished yet, soonest first. */
+export async function getUpcomingPrograms(limit = 6) {
   return db
     .select({
       slug: events.slug,
@@ -146,8 +148,8 @@ export async function getUpcomingEvents(limit = 6) {
     .limit(limit);
 }
 
-/** Gatherings that have already happened, most recent first. */
-export async function getPastEvents(limit = 12) {
+/** Programs that have already happened, most recent first. */
+export async function getPastPrograms(limit = 12) {
   return db
     .select({
       slug: events.slug,
@@ -161,9 +163,10 @@ export async function getPastEvents(limit = 12) {
     .limit(limit);
 }
 
-export async function getEventBySlug(slug: string) {
+export async function getProgramBySlug(slug: string) {
   const [row] = await db
     .select({
+      id: events.id,
       slug: events.slug,
       title: events.title,
       description: events.description,
@@ -181,7 +184,46 @@ export async function getEventBySlug(slug: string) {
     .where(and(eq(events.slug, slug), eq(events.isPublished, true)))
     .limit(1);
 
-  return row ?? null;
+  if (!row) return null;
+
+  const gallery = await db
+    .select({
+      path: mediaAssets.path,
+      bucket: mediaAssets.bucket,
+      altText: mediaAssets.altText,
+      caption: programGallery.caption,
+    })
+    .from(programGallery)
+    .innerJoin(mediaAssets, eq(programGallery.mediaId, mediaAssets.id))
+    .where(eq(programGallery.eventId, row.id))
+    .orderBy(asc(programGallery.sortOrder));
+
+  return { ...row, gallery };
+}
+
+/** Newest first — a comment feed reads like recent activity, not a transcript. */
+export async function getProgramComments(eventId: string) {
+  return db
+    .select({
+      id: programComments.id,
+      authorName: programComments.authorName,
+      body: programComments.body,
+      createdAt: programComments.createdAt,
+    })
+    .from(programComments)
+    .where(eq(programComments.eventId, eventId))
+    .orderBy(desc(programComments.createdAt));
+}
+
+/** Used by the public comment action to confirm the target is a real, published program. */
+export async function getPublishedProgramId(eventId: string) {
+  const [row] = await db
+    .select({ id: events.id })
+    .from(events)
+    .where(and(eq(events.id, eventId), eq(events.isPublished, true)))
+    .limit(1);
+
+  return row?.id ?? null;
 }
 
 // ── Music ────────────────────────────────────────────────────────────────

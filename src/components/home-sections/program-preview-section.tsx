@@ -2,15 +2,15 @@ import Link from "next/link";
 import { ArrowRight, MapPin } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { SplitWords } from "@/components/split-words";
-import type { HomeSection, getUpcomingEvents } from "@/lib/db/queries/public";
+import type { HomeSection, getUpcomingPrograms } from "@/lib/db/queries/public";
 
-type GatheringPreviewData = {
+type ProgramPreviewData = {
   emptyTitle?: string;
   emptyBody?: string;
   linkLabel?: string;
 };
 
-const gatheringTime = new Intl.DateTimeFormat("en-GH", {
+const programTime = new Intl.DateTimeFormat("en-GH", {
   weekday: "long",
   day: "numeric",
   month: "long",
@@ -21,15 +21,15 @@ const gatheringTime = new Intl.DateTimeFormat("en-GH", {
 });
 
 /** Straight after the hero on purpose: a real time and a real place before anything is asked for. */
-export function GatheringPreviewSection({
+export function ProgramPreviewSection({
   section,
   events,
 }: {
   section: HomeSection;
-  events: Awaited<ReturnType<typeof getUpcomingEvents>>;
+  events: Awaited<ReturnType<typeof getUpcomingPrograms>>;
 }) {
-  const data = (section.data ?? {}) as GatheringPreviewData;
-  const nextGathering = events[0] ?? null;
+  const data = (section.data ?? {}) as ProgramPreviewData;
+  const nextProgram = events[0] ?? null;
 
   return (
     <section className="section border-b border-hairline">
@@ -41,18 +41,18 @@ export function GatheringPreviewSection({
         )}
 
         <Reveal from="below" delay={0.08}>
-          {nextGathering ? (
+          {nextProgram ? (
             <div>
-              <p className="m-0 text-step-1 font-medium">{nextGathering.title}</p>
-              <p className="m-0 mt-2 text-quiet">{gatheringTime.format(nextGathering.startsAt)}</p>
-              {nextGathering.location && (
+              <p className="m-0 text-step-1 font-medium">{nextProgram.title}</p>
+              <p className="m-0 mt-2 text-quiet">{programTime.format(nextProgram.startsAt)}</p>
+              {nextProgram.location && (
                 <p className="m-0 mt-1 text-quiet inline-flex items-center gap-1.5">
                   <MapPin size={15} aria-hidden />
-                  {nextGathering.location}
+                  {nextProgram.location}
                 </p>
               )}
               <Link
-                href={`/gatherings/${nextGathering.slug}`}
+                href={`/programs/${nextProgram.slug}`}
                 className="mt-5 inline-flex items-center gap-2 text-brand no-underline hover:underline"
               >
                 {data.linkLabel || "What to expect"}

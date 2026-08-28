@@ -37,7 +37,7 @@ const FIELD_META: Record<
   linkHref: { label: "Link target", hint: "A path like /community" },
   secondaryTitle: { label: "Second panel / sub-card heading" },
   secondaryBody: { label: "Second panel / sub-card body", multiline: true },
-  emptyTitle: { label: "Empty-state heading", hint: "Shown when no gathering is scheduled." },
+  emptyTitle: { label: "Empty-state heading", hint: "Shown when no program is scheduled." },
   emptyBody: { label: "Empty-state body", multiline: true },
   limit: { label: "How many to show", type: "number" },
 };

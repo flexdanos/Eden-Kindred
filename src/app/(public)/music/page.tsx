@@ -29,7 +29,7 @@ export default async function MusicPage() {
           </h1>
           <Reveal from="below" delay={0.3}>
             <p className="measure mt-8 text-step-1 text-quiet">
-              Recordings from the gatherings and from the room next door. Most of it was
+              Recordings from the programs and from the room next door. Most of it was
               written to be sung by a crowd rather than performed at one.
             </p>
           </Reveal>

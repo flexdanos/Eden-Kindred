@@ -45,9 +45,9 @@ export const CONTENT_BLOCK_KIND_INFO: Record<
       "A heading and body next to a highlighted sub-card with its own heading, body, and two buttons.",
   },
   gathering_preview: {
-    label: "Next gathering preview",
+    label: "Next program preview",
     description:
-      "A heading plus the soonest upcoming, published gathering — or empty-state copy when none is scheduled.",
+      "A heading plus the soonest upcoming, published program — or empty-state copy when none is scheduled.",
   },
   teaching_list: {
     label: "Recent teaching list",

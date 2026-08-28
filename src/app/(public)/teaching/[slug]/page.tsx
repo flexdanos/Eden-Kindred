@@ -104,13 +104,13 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           </h2>
           <p className="measure mt-5 text-quiet">
             Most of what is written here started as an argument in a room. If you want the
-            room rather than the page, the gatherings are open.
+            room rather than the page, the programs are open.
           </p>
           <Link
-            href="/gatherings"
+            href="/programs"
             className="mt-8 inline-flex items-center bg-brand text-chalk px-7 py-4 font-medium no-underline rounded-(--radius) transition-colors hover:bg-brand-hover"
           >
-            When we gather
+            See our programs
           </Link>
         </div>
       </section>

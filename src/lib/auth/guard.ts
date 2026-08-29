@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -58,8 +59,21 @@ function devPreviewUser(): SessionUser | null {
   };
 }
 
-/** The signed-in user with their profile row, or null. */
-export async function getSessionUser(): Promise<SessionUser | null> {
+/**
+ * The signed-in user with their profile row, or null.
+ *
+ * Memoised per request with React's `cache`. Without it, every call did a
+ * network round trip to Supabase Auth PLUS a profile query — and an admin page
+ * render makes several: the layout calls assertStaff(), then the page calls it
+ * again, and anything else needing the user calls it too. On a database in
+ * eu-west-1 that was hundreds of milliseconds of duplicated waiting on every
+ * navigation.
+ *
+ * `cache` is per-request, not a shared cache: two visitors never see each
+ * other's session, and a fresh request always revalidates the JWT. It only
+ * collapses repeat calls within one render pass, which is exactly the waste.
+ */
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const preview = devPreviewUser();
   if (preview) return preview;
 
@@ -94,7 +108,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     isTeamMember: profile?.isTeamMember ?? false,
     instrument: profile?.instrument ?? null,
   };
-}
+});
 
 /**
  * Gate for the musicians' area.

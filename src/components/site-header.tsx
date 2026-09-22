@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { useAuthModal } from "@/components/auth/auth-modal-context";
+import { AccountMenu } from "@/components/auth/account-menu";
+import { useAuthUser } from "@/components/auth/use-auth-user";
+import { createClient } from "@/lib/supabase/client";
 
 const NAV = [
   { href: "/music", label: "Music" },
@@ -24,8 +28,32 @@ const NAV = [
  */
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { openAuthModal } = useAuthModal();
   const [scrolled, setScrolled] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+
+  /**
+   * Three states: `undefined` while the check is in flight, `null` signed out,
+   * an object signed in. The give form needs exactly the same answer, so this
+   * lives in one hook rather than being subscribed to twice.
+   */
+  const account = useAuthUser();
+  const signedIn = Boolean(account);
+
+  async function signOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.refresh();
+  }
+
+  function handleAccountClick() {
+    if (signedIn) {
+      void signOut();
+      return;
+    }
+    openAuthModal({ reason: "Sign in to save your place in this community." });
+  }
 
   /**
    * The sheet's open state is the route it was opened on, not a boolean.
@@ -122,13 +150,32 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
-          <Link
-            href="/join"
-            className="inline-flex items-center bg-brand text-chalk px-5 py-2.5 text-step--1 font-medium no-underline rounded-[var(--radius)] transition-colors hover:bg-brand-hover"
-          >
-            Join us
-          </Link>
+        {/* Signed in, the pair collapses to one account control. Leaving "Join
+            us" up for someone who has already joined is the thing that made it
+            read as "you are not in yet". While the check is unresolved the slot
+            reserves its width so the header does not shift. */}
+        <div className="hidden md:flex items-center gap-5">
+          {account === undefined ? (
+            <div className="size-9" aria-hidden />
+          ) : account ? (
+            <AccountMenu email={account.email} onSignOut={signOut} />
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={handleAccountClick}
+                className="text-step--1 text-ink/80 hover:text-ink transition-colors"
+              >
+                Sign in
+              </button>
+              <Link
+                href="/join"
+                className="inline-flex items-center bg-brand text-chalk px-5 py-2.5 text-step--1 font-medium no-underline rounded-[var(--radius)] transition-colors hover:bg-brand-hover"
+              >
+                Join us
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -164,13 +211,48 @@ export function SiteHeader() {
               </li>
             ))}
           </ul>
-          <Link
-            onClick={closeMenu}
-            href="/join"
-            className="mt-8 inline-flex w-full items-center justify-center bg-brand text-chalk px-6 py-4 text-step-0 font-medium no-underline rounded-(--radius)"
-          >
-            Join us
-          </Link>
+          {/* Same reasoning as the desktop side: once signed in, say so and say
+              as whom, and stop inviting someone to join what they have joined.
+              There is no dropdown here — a sheet has the room to state it
+              outright, which is better than hiding it behind a tap. */}
+          {account ? (
+            <div className="mt-8 border-t border-hairline pt-6">
+              <p className="m-0 text-step--1 text-quiet">Signed in as</p>
+              <p className="m-0 mt-1 break-all text-step-0 font-medium">
+                {account.email ?? "your account"}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  void signOut();
+                }}
+                className="mt-5 inline-flex w-full items-center justify-center border border-hairline px-6 py-4 text-step-0 font-medium rounded-(--radius)"
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link
+                onClick={closeMenu}
+                href="/join"
+                className="mt-8 inline-flex w-full items-center justify-center bg-brand text-chalk px-6 py-4 text-step-0 font-medium no-underline rounded-(--radius)"
+              >
+                Join us
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  handleAccountClick();
+                }}
+                className="mt-4 inline-flex w-full items-center justify-center border border-hairline px-6 py-4 text-step-0 font-medium rounded-(--radius)"
+              >
+                Sign in
+              </button>
+            </>
+          )}
         </nav>
       </div>
     </header>

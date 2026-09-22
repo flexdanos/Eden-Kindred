@@ -1,10 +1,11 @@
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { SmoothScroll } from "@/components/smooth-scroll";
+import { AuthModalProvider } from "@/components/auth/auth-modal-context";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <AuthModalProvider>
       <SmoothScroll />
       <a
         href="#main"
@@ -17,6 +18,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         {children}
       </main>
       <SiteFooter />
-    </>
+    </AuthModalProvider>
   );
 }

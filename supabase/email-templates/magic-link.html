@@ -1,0 +1,55 @@
+<!--
+  Supabase Auth → Email Templates → "Magic Link"
+
+  Sent by signInWithOtp() for an email that ALREADY has an auth.users row.
+  New addresses get confirm-signup.html instead — both templates must carry a
+  code, or half the audience gets a link.
+
+  There is deliberately no {{ .ConfirmationURL }} in here. Corporate mail
+  filters (Microsoft Defender Safe Links among them) pre-fetch every URL in an
+  email to scan it, which consumes a single-use magic-link token before the
+  recipient ever clicks — they then get "link expired" on their first attempt.
+  A typed code has no URL for a scanner to visit.
+
+  Hex, not oklch: Gmail and Outlook drop colours they cannot parse. These
+  mirror the tokens in src/app/globals.css.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8f3f3;padding:40px 16px;font-family:Georgia,'Times New Roman',serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;background-color:#ffffff;border:1px solid #e6dcdc;">
+        <tr>
+          <td style="padding:32px 32px 0;">
+            <p style="margin:0;font-size:20px;line-height:1;color:#7d092d;">Eden <em>Kindred</em></p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 32px 0;">
+            <h1 style="margin:0;font-size:22px;font-weight:normal;color:#1e1313;">Your sign-in code</h1>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#6c605f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+              Enter this code to finish signing in. It expires shortly and can only be used once.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 32px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td align="center" style="background-color:#f8f3f3;border:1px solid #e6dcdc;padding:20px 16px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:30px;letter-spacing:8px;color:#1e1313;">
+                  {{ .Token }}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 32px 32px;">
+            <p style="margin:0;font-size:13px;line-height:1.6;color:#6c605f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+              Didn't ask for this? Ignore this email — nobody can sign in without the code above.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

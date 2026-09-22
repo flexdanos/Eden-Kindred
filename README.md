@@ -58,7 +58,31 @@ Then in the Supabase SQL editor, run in order:
 2. `supabase/storage.sql` — the `media` bucket and its object policies
 3. `supabase/seed.sql` — optional starter content
 
-### 4. Make yourself an admin
+### 4. Auth emails — codes, not links
+
+**Both sign-in surfaces verify a typed 6-digit code, and neither can handle a
+clicked link.** Nothing in the app renders a link handler any more, so if the
+email carries a link the flow is simply broken.
+
+Whether it carries a code or a link is a dashboard setting, not code. In
+**Authentication → Emails → Templates**, paste over the message body of:
+
+| Template | File | Sent when |
+|---|---|---|
+| Magic Link | `supabase/email-templates/magic-link.html` | `signInWithOtp` on an address that already has an `auth.users` row |
+| Confirm signup | `supabase/email-templates/confirm-signup.html` | `signInWithOtp` on a brand-new address |
+
+Both ship from Supabase with a `{{ .ConfirmationURL }}` link body and no code.
+Update only one and you split the audience — returning partners get a code,
+first-time ones get a link, and the bug looks intermittent.
+
+The reason to prefer a code here isn't only taste: link-scanning mail filters
+(Microsoft Defender Safe Links among them) pre-fetch every URL in an email,
+which burns a single-use magic-link token before the recipient clicks it. They
+then see "link expired" on their first attempt. A typed code has no URL to
+pre-fetch.
+
+### 5. Make yourself an admin
 
 Sign in once at `/login` to create your `profiles` row, then:
 
@@ -68,13 +92,13 @@ update public.profiles set role = 'admin' where id = (
 );
 ```
 
-### 5. Paystack
+### 6. Paystack
 
 Set the webhook URL in the Paystack dashboard to `https://your-domain/api/paystack/webhook`.
 
 Deliveries are signed with HMAC-SHA512 of the **raw** body using your secret key — there is no separate webhook secret. [The handler](src/app/api/paystack/webhook/route.ts) reads `await req.text()` and verifies against that string; parsing to JSON first and re-serialising changes key order and the signature will never match.
 
-### 6. Reminder cron
+### 7. Reminder cron
 
 `vercel.json` schedules `/api/cron/pledge-reminders` daily at 08:00. It needs `CRON_SECRET` set. Without it the endpoint returns 401 and pledges silently stop advancing.
 

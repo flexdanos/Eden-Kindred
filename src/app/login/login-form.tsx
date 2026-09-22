@@ -14,11 +14,26 @@ import { createClient } from "@/lib/supabase/client";
  *    filters (Microsoft Defender Safe Links among them) pre-fetch every link
  *    in an email to scan it, which silently consumes a single-use magic-link
  *    token before the recipient ever clicks. A typed code has no URL for a
- *    scanner to visit, so it survives that. Requires the "Magic Link" email
- *    template in the Supabase dashboard to include `{{ .Token }}` — by
- *    default it only renders the link.
+ *    scanner to visit, so it survives that.
+ *
+ * Whether the email carries a code or a link is decided in the Supabase
+ * dashboard, not here: `signInWithOtp` sends the "Magic Link" template to an
+ * existing address and "Confirm signup" to a new one, and both ship with a
+ * link body by default. `supabase/email-templates/` holds the `{{ .Token }}`
+ * versions to paste over them — see the README. Miss either template and that
+ * half of the audience gets a link the app can no longer handle.
  */
-export function LoginForm({ next }: { next: string }) {
+export function LoginForm({
+  next,
+  /**
+   * Set when an admin gate bounced an emailed-code session back here. Pins the
+   * form to password: the code path is the credential that was just refused.
+   */
+  forcePassword = false,
+}: {
+  next: string;
+  forcePassword?: boolean;
+}) {
   const emailId = useId();
   const passwordId = useId();
   const codeId = useId();
@@ -68,12 +83,9 @@ export function LoginForm({ next }: { next: string }) {
     setError(null);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
-    });
+    // No emailRedirectTo: there is no link in the email to redirect anywhere.
+    // Passing one would only re-open the link path this flow exists to avoid.
+    const { error } = await supabase.auth.signInWithOtp({ email });
 
     if (error) {
       setError(error.message);
@@ -173,30 +185,36 @@ export function LoginForm({ next }: { next: string }) {
 
   return (
     <div className="mt-8">
-      <div className="flex gap-4 border-b border-hairline text-step--1">
-        <button
-          type="button"
-          onClick={() => switchMethod("password")}
-          className={
-            method === "password"
-              ? "border-b-2 border-ink pb-3 font-semibold text-ink"
-              : "pb-3 text-quiet"
-          }
-        >
-          Password
-        </button>
-        <button
-          type="button"
-          onClick={() => switchMethod("email-code")}
-          className={
-            method === "email-code"
-              ? "border-b-2 border-ink pb-3 font-semibold text-ink"
-              : "pb-3 text-quiet"
-          }
-        >
-          Email code
-        </button>
-      </div>
+      {/* On a step-up, the email-code tab is not offered at all. An emailed
+          code is exactly the credential that failed the admin check — showing
+          it here would let someone loop straight back to the same refusal, and
+          would suggest it might work. */}
+      {!forcePassword && (
+        <div className="flex gap-4 border-b border-hairline text-step--1">
+          <button
+            type="button"
+            onClick={() => switchMethod("password")}
+            className={
+              method === "password"
+                ? "border-b-2 border-ink pb-3 font-semibold text-ink"
+                : "pb-3 text-quiet"
+            }
+          >
+            Password
+          </button>
+          <button
+            type="button"
+            onClick={() => switchMethod("email-code")}
+            className={
+              method === "email-code"
+                ? "border-b-2 border-ink pb-3 font-semibold text-ink"
+                : "pb-3 text-quiet"
+            }
+          >
+            Email code
+          </button>
+        </div>
+      )}
 
       {method === "password" ? (
         <form onSubmit={signInWithPassword} className="mt-6 flex flex-col gap-5">

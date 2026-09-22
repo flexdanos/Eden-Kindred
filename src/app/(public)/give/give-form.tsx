@@ -5,6 +5,8 @@ import { useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { startGiving, type GiveState } from "./actions";
 import { formatMinor } from "@/lib/money";
+import { useAuthModal } from "@/components/auth/auth-modal-context";
+import { useAuthUser } from "@/components/auth/use-auth-user";
 
 type Tier = {
   id: string;
@@ -43,6 +45,8 @@ function FieldError({ id, messages }: { id: string; messages?: string[] }) {
 }
 
 export function GiveForm({ tiers }: { tiers: Tier[] }) {
+  const { openAuthModal } = useAuthModal();
+  const account = useAuthUser();
   const [state, formAction] = useActionState(startGiving, initialState);
   const [cadence, setCadence] = useState<"once" | "monthly" | "quarterly" | "annual">(
     "once",
@@ -66,6 +70,32 @@ export function GiveForm({ tiers }: { tiers: Tier[] }) {
 
   return (
     <form action={formAction} className="mt-8">
+      {/* Only invite someone to sign in if they are not already. The slot keeps
+          its height while the check is unresolved so the form below it does not
+          jump once the answer lands. */}
+      <div className="mb-6 min-h-[1.5rem]">
+        {account === null && (
+          <p className="m-0 text-step--1 text-quiet">
+            Already partnering with us?{" "}
+            <button
+              type="button"
+              onClick={() =>
+                openAuthModal({ reason: "Sign in to manage your existing pledge." })
+              }
+              className="underline underline-offset-2 hover:text-ink"
+            >
+              Sign in
+            </button>{" "}
+            to manage your pledge.
+          </p>
+        )}
+        {account && (
+          <p className="m-0 text-step--1 text-quiet">
+            Giving as <span className="text-ink">{account.email ?? "your account"}</span>.
+          </p>
+        )}
+      </div>
+
       {state.error && (
         <div
           role="alert"

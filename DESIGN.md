@@ -13,7 +13,8 @@ Strategy: **Committed**. A single deep oxblood carries roughly 40% of the surfac
 All values OKLCH. Contrast verified numerically, not estimated.
 
 ```css
---bg:      oklch(1.000 0.000 0);     /* #ffffff — pure, no hidden warmth */
+--bg:      oklch(1.000 0.000 0);     /* #ffffff — cards, and the admin ground */
+--paper:   oklch(0.975 0.006 45);    /* #faf6f3 — the public page ground */
 --surface: oklch(0.968 0.005 20);    /* #f8f3f3 — bg pulled toward ink */
 --ink:     oklch(0.200 0.018 20);    /* #1e1313 — 18.2:1 on bg */
 --muted:   oklch(0.500 0.016 20);    /* #6c605f — 6.1:1 on bg */
@@ -22,7 +23,17 @@ All values OKLCH. Contrast verified numerically, not estimated.
 --chalk:   oklch(0.970 0.008 40);    /* #faf3f1 — text on oxblood, 9.9:1 */
 ```
 
-Verified ratios: ink/bg 18.18 · muted/bg 6.05 · ink/surface 16.54 · chalk/primary 9.89 · white/primary 10.80 · primary/accent 1.96 · accent/bg 5.51.
+Verified ratios: ink/bg 18.18 · muted/bg 6.05 · ink/paper 16.89 · muted/paper 5.62 · ink/surface 16.54 · chalk/primary 9.89 · white/primary 10.80 · primary/accent 1.96 · accent/bg 5.51.
+
+**Paper, and why the "pure white" rule moved.** The public site's ground is
+`--paper`, not `--bg`. The original argument for pure white was daylight
+readability on a mid-range phone, and that argument is about light versus dark
+— at L 0.975 paper is functionally identical outdoors, and the measured ratios
+above say so rather than assuming it. What it buys is separation: on a white
+ground the only way to make a panel read as a panel is a border or a shadow,
+and this brand will not use shadows. On paper, a white card is simply lighter
+than the page. The admin console stays on `--bg`; a dense table gains nothing
+from a warm ground.
 
 Usage rules:
 - **Primary (oxblood)** fills CTAs and drenched sections, and is also the **link and focus-ring colour**. Text on an oxblood fill is `--chalk` or pure white, never dark. At 10.8:1 on white it is a strong link colour, and using the brand rather than a separate hue keeps links reading as part of the page instead of as browser defaults.
@@ -57,6 +68,39 @@ Motion is part of the build, not a layer applied afterward. Libraries: **Motion*
 - Each reveal is chosen for what it reveals. A uniform fade-up applied to every section is the tell to avoid.
 
 ## Layout
+
+### Radii
+
+Three values, because they answer three different questions:
+
+| token | value | used for |
+| --- | --- | --- |
+| `--radius` | 3px | admin console, and anything behaving like a form control in a dense table |
+| `--control-radius` | 8px | public-site buttons and inputs (`rounded-control`) |
+| `--card-radius` | 14px | photographs, cards, panels (`rounded-card`, `.frame`, `.card-soft`) |
+
+"Set, not styled" still governs the admin. It was wrong about photography: a
+3px corner on a 4:3 photograph doesn't read as restraint, it reads as an
+unstyled `<img>`. Controls sit between the two — enough arc to belong beside a
+14px card, not enough to become a pill, which is the megachurch tell.
+
+`.card-soft` carries no shadow. Against `--paper`, the value step from a white
+fill already separates the planes, and a shadow under every card is the SaaS
+landing page PRODUCT.md rules out.
+
+### Next-step rows
+
+The pattern for offering a visitor somewhere to go: a photograph, a short
+paragraph, and **exactly one** link out, alternating side by index
+(`src/components/next-step.tsx`). The constraint is the point — a reader
+scrolling a stack of these is never asked to compare options, only to continue
+or stop, which suits a newcomer who arrives guarded. Cap a list at five or six;
+past that the page stops being a path and becomes a directory. Where options
+genuinely are parallel, use `NextStepCard` in a grid instead, and be honest
+about which of the two a section needs.
+
+Order rows by what each one costs the reader, cheapest first. On `/connect`
+that runs: listen → read → attend → join a group → give.
 
 - Fluid spacing via `clamp()`, varied deliberately: generous separation between narrative sections, tight grouping within them.
 - Full-bleed photography with overlaid type for hero and gathering sections — the canonical image-led move, and correct here.

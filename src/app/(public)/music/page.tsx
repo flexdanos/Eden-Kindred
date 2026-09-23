@@ -47,7 +47,7 @@ export default async function MusicPage() {
                       href={`/music/${release.slug}`}
                       className="group block no-underline"
                     >
-                      <div className="relative aspect-square overflow-hidden rounded-(--radius) bg-surface">
+                      <div className="frame relative aspect-square">
                         <CmsImage
                           media={release.media}
                           alt={release.media?.altText ?? `${release.title} cover art`}

@@ -141,7 +141,7 @@ export function AuthModal({
             <button
               type="submit"
               disabled={status === "loading"}
-              className="inline-flex items-center justify-center gap-2 bg-brand text-chalk px-6 py-3.5 font-medium rounded-[var(--radius)] transition-colors hover:bg-brand-hover disabled:opacity-70"
+              className="inline-flex items-center justify-center gap-2 bg-brand text-chalk px-6 py-3.5 font-medium rounded-control transition-colors hover:bg-brand-hover disabled:opacity-70"
             >
               {status === "loading" && <Loader2 size={16} className="animate-spin" aria-hidden />}
               {status === "loading" ? "Sending…" : "Email me a code"}
@@ -170,7 +170,7 @@ export function AuthModal({
             <button
               type="submit"
               disabled={status === "loading" || code.length < 6}
-              className="inline-flex items-center justify-center gap-2 bg-brand text-chalk px-6 py-3.5 font-medium rounded-[var(--radius)] transition-colors hover:bg-brand-hover disabled:opacity-70"
+              className="inline-flex items-center justify-center gap-2 bg-brand text-chalk px-6 py-3.5 font-medium rounded-control transition-colors hover:bg-brand-hover disabled:opacity-70"
             >
               {status === "loading" && <Loader2 size={16} className="animate-spin" aria-hidden />}
               {status === "loading" ? "Verifying…" : "Verify"}

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Clock, MapPin } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
+import { Cta } from "@/components/cta";
+import { GatheringCard } from "@/components/gathering-card";
 import { Reveal } from "@/components/reveal";
 import { SplitWords } from "@/components/split-words";
 import { safe } from "@/lib/db/safe";
@@ -11,7 +13,7 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Join us",
   description:
-    "Come to a program of the Eden Kindred worship community in Accra. No sign-up, no visitor card.",
+    "Come to a program of the Eden Kindred worship community. No sign-up, no visitor card, and here is exactly what happens when you arrive.",
 };
 
 const programTime = new Intl.DateTimeFormat("en-GH", {
@@ -24,6 +26,21 @@ const programTime = new Intl.DateTimeFormat("en-GH", {
   timeZoneName: "short",
 });
 
+const QUESTIONS = [
+  {
+    q: "Will anyone make a fuss of me?",
+    a: "Someone will say hello and then leave you alone. You will not be asked to stand up, introduce yourself, or fill anything in.",
+  },
+  {
+    q: "What should I wear?",
+    a: "Whatever you have on. People come from work, from home, and from other people's weddings.",
+  },
+  {
+    q: "Can I bring my children?",
+    a: "Yes, and they do not need to be quiet. Nobody here is concentrating that hard.",
+  },
+];
+
 export default async function JoinPage() {
   const events = await safe("join-programs", () => getUpcomingPrograms(4), []);
 
@@ -31,7 +48,8 @@ export default async function JoinPage() {
     <>
       <section className="section">
         <div className="shell">
-          <h1 className="m-0 text-step-5 max-w-[14ch]">
+          <span className="eyebrow">Come to a program</span>
+          <h1 className="m-0 mt-5 text-step-5 max-w-[14ch]">
             <SplitWords text="Come and *sit* at the back." />
           </h1>
           <Reveal from="below" delay={0.35}>
@@ -44,6 +62,15 @@ export default async function JoinPage() {
         </div>
       </section>
 
+      {/* Times and place before anything else, same as /connect. Someone who
+          arrived here having already decided to come should not have to read
+          the argument for coming. */}
+      <section className="pb-(--space-section)">
+        <div className="shell">
+          <GatheringCard next={events[0] ?? null} />
+        </div>
+      </section>
+
       <section className="section border-t border-hairline">
         <div className="shell">
           <h2 className="m-0 text-step-3 max-w-[16ch]">
@@ -51,13 +78,16 @@ export default async function JoinPage() {
           </h2>
 
           {events.length > 0 ? (
-            <ul className="mt-(--space-block) list-none m-0 p-0 border-t border-hairline">
+            <ul className="mt-(--space-block) m-0 grid list-none gap-4 p-0">
               {events.map((event, i) => (
-                <li key={event.slug} className="border-b border-hairline">
+                <li key={event.slug}>
                   <Reveal from="below" delay={i * 0.06}>
+                    {/* The whole card is the target, not the title alone. On a
+                        phone the date and the place are what people aim at,
+                        and in the previous list neither was tappable. */}
                     <Link
                       href={`/programs/${event.slug}`}
-                      className="group grid gap-2 py-8 no-underline md:grid-cols-[1fr_1.2fr] md:gap-8"
+                      className="card-soft group grid items-center gap-2 p-7 no-underline transition-colors hover:border-ink/30 md:grid-cols-[1fr_1.2fr] md:gap-8"
                     >
                       <h3 className="m-0 text-step-2 transition-colors group-hover:text-brand">
                         {event.title}
@@ -92,29 +122,22 @@ export default async function JoinPage() {
           whether to walk in, and the thing most sites leave out. */}
       <section className="on-brand section">
         <div className="shell">
-          <h2 className="m-0 text-step-4 max-w-[16ch]">
+          <span className="eyebrow">Before you come</span>
+          <h2 className="m-0 mt-5 text-step-4 max-w-[16ch]">
             <SplitWords text="What actually *happens* when you arrive" />
           </h2>
 
-          <ul className="mt-(--space-block) grid gap-8 list-none m-0 p-0 md:grid-cols-3">
-            {[
-              {
-                q: "Will anyone make a fuss of me?",
-                a: "Someone will say hello and then leave you alone. You will not be asked to stand up, introduce yourself, or fill anything in.",
-              },
-              {
-                q: "What should I wear?",
-                a: "Whatever you have on. People come from work, from home, and from other people's weddings.",
-              },
-              {
-                q: "Can I bring my children?",
-                a: "Yes, and they do not need to be quiet. Nobody here is concentrating that hard.",
-              },
-            ].map((item, i) => (
+          <ul className="mt-(--space-block) grid gap-6 list-none m-0 p-0 md:grid-cols-3">
+            {QUESTIONS.map((item, i) => (
               <li key={item.q}>
                 <Reveal from="below" delay={i * 0.07}>
-                  <h3 className="m-0 text-step-1 text-chalk">{item.q}</h3>
-                  <p className="m-0 mt-3 quiet-text">{item.a}</p>
+                  {/* Carded rather than loose columns. Three questions in a row
+                      of bare text read as one paragraph broken in three; the
+                      panel is what makes each one a discrete answer. */}
+                  <div className="h-full rounded-card border border-chalk/25 p-7">
+                    <h3 className="m-0 text-step-1 text-chalk">{item.q}</h3>
+                    <p className="m-0 mt-3 quiet-text">{item.a}</p>
+                  </div>
                 </Reveal>
               </li>
             ))}
@@ -122,19 +145,12 @@ export default async function JoinPage() {
 
           <Reveal from="below" delay={0.25}>
             <div className="mt-(--space-block) flex flex-wrap gap-3">
-              <Link
-                href="/programs"
-                className="inline-flex items-center gap-2 bg-chalk text-ink px-7 py-4 font-medium no-underline rounded-(--radius) transition-transform duration-(--dur-fast) hover:-translate-y-0.5"
-              >
+              <Cta href="/programs" variant="inverse">
                 See all programs
-                <ArrowRight size={16} aria-hidden />
-              </Link>
-              <Link
-                href="/community"
-                className="inline-flex items-center px-7 py-4 font-medium no-underline text-chalk border border-chalk/40 rounded-(--radius) transition-colors hover:border-chalk"
-              >
-                How we are put together
-              </Link>
+              </Cta>
+              <Cta href="/connect" variant="inverse-outline" arrow={false}>
+                Other ways in
+              </Cta>
             </div>
           </Reveal>
         </div>

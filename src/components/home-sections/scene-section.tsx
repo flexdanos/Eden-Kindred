@@ -74,7 +74,7 @@ export function SceneSection({ sections }: { sections: HomeSection[] }) {
               {/* Now shown on mobile too. The scroll-linked drift is pure
                   transform on a composited layer, so it costs a phone nothing
                   and it is most of what makes the section feel built. */}
-              <ParallaxMedia className="m-0 aspect-4/5 rounded-(--radius)" drift={5} scaleFrom={1.08}>
+              <ParallaxMedia className="frame m-0 aspect-4/5" drift={5} scaleFrom={1.08}>
                 <CmsImage
                   media={section.media}
                   alt={section.media?.altText ?? section.title ?? ""}

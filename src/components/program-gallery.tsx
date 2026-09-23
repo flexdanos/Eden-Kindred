@@ -10,7 +10,7 @@ export function ProgramGallery({ images }: { images: GalleryItem[] }) {
     <ul className="mt-(--space-block) list-none m-0 p-0 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {images.map((image, i) => (
         <li key={`${image.path}-${i}`}>
-          <div className="relative aspect-square w-full overflow-hidden rounded-(--radius) bg-surface">
+          <div className="frame relative aspect-square w-full">
             <CmsImage
               media={image}
               alt={image.altText ?? image.caption ?? ""}

@@ -29,6 +29,23 @@
      the readable ground outdoors on a phone. */
 
   --brand-bg: oklch(1 0 0);                 /* #ffffff */
+  /* The public site's page ground.
+   *
+   * DESIGN.md originally put the whole site on pure white, arguing daylight
+   * readability on a mid-range phone. That argument is about light vs dark, and
+   * it survives intact here: paper sits at L 0.975, so ink still measures
+   * 16.89:1 and quiet 5.62:1 on it (measured by scripts/check-contrast.mjs,
+   * not estimated).
+   *
+   * What it buys is the thing pure white cannot do: a white card can now read
+   * as a card. On a white ground the only way to separate a panel from the page
+   * is a border or a shadow; on paper the panel is simply lighter than what is
+   * behind it, which is how the reference site's soft-card layout works and why
+   * its cards feel lifted rather than outlined.
+   *
+   * Public only. The admin console stays on --brand-bg; a dense table surface
+   * gains nothing from a warm ground. */
+  --brand-paper: oklch(0.975 0.006 45);     /* #faf6f3 — 16.89:1 with ink */
   --brand-surface: oklch(0.968 0.005 20);   /* #f8f3f3 */
   --brand-surface-2: oklch(0.94 0.008 20);
   --brand-ink: oklch(0.2 0.018 20);         /* #1e1313 — 18.18:1 on bg */
@@ -93,6 +110,30 @@
      only on primary and destructive actions. */
 
   --radius: 3px; /* near-square — this brand is set, not styled */
+
+  /* ── Public-site radii ──────────────────────────────────────────────
+     Three values, not one, because they answer three different questions.
+
+     --radius (3px) stays the admin's answer and the answer for anything that
+     behaves like a form control in a dense table. "Set, not styled" is still
+     right there.
+
+     Photography is the exception the original single-token rule got wrong. A
+     3px corner on a 4:3 photograph doesn't read as restraint, it reads as an
+     unstyled <img>: the eye needs enough arc to register the crop as
+     deliberate. 14px is the smallest radius that does that at the sizes these
+     cards actually render.
+
+     Controls land between the two. 8px keeps a button feeling like a button
+     next to a 14px card without picking up the pill shape that would drag the
+     page toward the megachurch reference PRODUCT.md rules out.
+
+     Named --card-radius / --control-radius rather than --radius-card, because
+     the @theme block below has to map them onto Tailwind's `--radius-*`
+     namespace and `--radius-card: var(--radius-card)` is a cycle, not an
+     alias. */
+  --card-radius: 14px;
+  --control-radius: 8px;
 
   --background: var(--brand-bg);
   --foreground: var(--brand-ink);
@@ -182,6 +223,7 @@
   --color-brand-hover: var(--brand-hover);
   --color-brand-accent: var(--brand-accent);
   --color-brand-bg: var(--brand-bg);
+  --color-paper: var(--brand-paper);
   --color-surface: var(--brand-surface);
   --color-surface-2: var(--brand-surface-2);
   --color-ink: var(--brand-ink);
@@ -243,6 +285,12 @@
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
+
+  /* rounded-card / rounded-control on the public site. Kept out of shadcn's
+     sm/md/lg/xl ramp on purpose — those are derived from --radius and the
+     admin depends on them staying near-square. */
+  --radius-card: var(--card-radius);
+  --radius-control: var(--control-radius);
 }
 
 /* ── Base ────────────────────────────────────────────────────────────── */
@@ -391,6 +439,57 @@
 
   .on-brand .quiet-text {
     color: color-mix(in oklch, var(--chalk) 74%, var(--brand));
+  }
+
+  /* ── Soft cards ──────────────────────────────────────────────────────
+     A panel lifted off the paper ground. White fill does most of the work;
+     the hairline is there for the case where a card sits on white anyway
+     (the admin, or a section that deliberately breaks to --brand-bg).
+
+     No drop shadow. A shadow under every card is the SaaS-landing-page tell
+     PRODUCT.md rules out, and against paper it is not needed — the value
+     difference between #ffffff and #faf6f3 already separates the planes. */
+  .card-soft {
+    background: var(--brand-bg);
+    border: 1px solid var(--hairline);
+    border-radius: var(--card-radius);
+  }
+
+  /* Same card, drenched. For a step that should read as the primary one. */
+  .card-soft.on-brand {
+    background: var(--brand);
+    border-color: color-mix(in oklch, var(--chalk) 22%, transparent);
+  }
+
+  /* An image crop. `overflow: hidden` is load-bearing: ParallaxMedia
+     translates a layer inset beyond this frame, and without the clip the
+     rounded corner is the first thing the drift breaks. */
+  .frame {
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    background: var(--brand-surface);
+  }
+
+  /* Section label. Borrowed from the reference, which sets small all-caps
+     above nearly every block — it does the job an <h2> would otherwise have
+     to do twice, naming the section without competing with the heading.
+
+     Tracked out to 0.14em because Schibsted's caps are tight enough to clump
+     at small sizes, and given a real font-weight rather than colour alone so
+     it survives being placed on oxblood. */
+  .eyebrow {
+    display: block;
+    font-family: var(--font-body);
+    font-size: var(--step--1);
+    font-weight: 600;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--brand-quiet);
+  }
+
+  .on-brand .eyebrow {
+    color: color-mix(in oklch, var(--chalk) 78%, var(--brand));
   }
 }
 

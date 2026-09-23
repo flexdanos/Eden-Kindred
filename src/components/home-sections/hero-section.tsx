@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { CmsImage } from "@/components/cms-image";
+import { Cta } from "@/components/cta";
 import { ParallaxMedia } from "@/components/parallax-media";
 import { Reveal } from "@/components/reveal";
 import { SplitWords } from "@/components/split-words";
@@ -70,21 +69,14 @@ export function HeroSection({ section }: { section: HomeSection }) {
           <Reveal from="below" delay={0.55}>
             <div className="mt-9 flex flex-wrap items-center gap-3">
               {data.primaryLabel && data.primaryHref && (
-                <Link
-                  href={data.primaryHref}
-                  className="inline-flex items-center gap-2 bg-chalk text-ink px-7 py-4 font-medium no-underline rounded-[var(--radius)] transition-transform duration-(--dur-fast) hover:-translate-y-0.5"
-                >
+                <Cta href={data.primaryHref} variant="inverse">
                   {data.primaryLabel}
-                  <ArrowRight size={17} aria-hidden />
-                </Link>
+                </Cta>
               )}
               {data.secondaryLabel && data.secondaryHref && (
-                <Link
-                  href={data.secondaryHref}
-                  className="inline-flex items-center px-7 py-4 font-medium no-underline text-chalk border border-chalk/40 rounded-[var(--radius)] transition-colors hover:border-chalk"
-                >
+                <Cta href={data.secondaryHref} variant="inverse-outline" arrow={false}>
                   {data.secondaryLabel}
-                </Link>
+                </Cta>
               )}
             </div>
           </Reveal>

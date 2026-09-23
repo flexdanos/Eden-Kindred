@@ -46,6 +46,7 @@ const hex = ([r, g, b]) =>
 // Keep in step with :root in src/app/globals.css
 const TOKENS = {
   "brand-bg": [1.0, 0.0, 0],
+  "brand-paper": [0.975, 0.006, 45],
   "brand-surface": [0.968, 0.005, 20],
   "brand-ink": [0.2, 0.018, 20],
   "brand-quiet": [0.5, 0.016, 20],
@@ -70,6 +71,10 @@ for (const [name, v] of Object.entries(TOKENS)) {
 const CHECKS = [
   ["body text on bg", c["brand-ink"], c["brand-bg"], 7],
   ["muted text on bg", c["brand-quiet"], c["brand-bg"], 4.5],
+  // Paper is the public site's page ground, so these two are the ratios that
+  // actually decide daylight readability for most visitors.
+  ["body text on paper", c["brand-ink"], c["brand-paper"], 7],
+  ["muted text on paper", c["brand-quiet"], c["brand-paper"], 4.5],
   ["body text on surface", c["brand-ink"], c["brand-surface"], 7],
   ["chalk on oxblood", c.chalk, c.brand, 4.5],
   ["white on oxblood", c["brand-bg"], c.brand, 4.5],

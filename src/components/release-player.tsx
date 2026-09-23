@@ -15,7 +15,7 @@ export function YouTubeEmbed({ videoId, title }: { videoId: string; title: strin
   if (!SAFE_ID.test(videoId)) return null;
 
   return (
-    <div className="relative w-full overflow-hidden rounded-(--radius) bg-ink aspect-video">
+    <div className="frame relative w-full bg-ink aspect-video">
       <iframe
         className="absolute inset-0 h-full w-full"
         src={`https://www.youtube-nocookie.com/embed/${videoId}`}
@@ -44,7 +44,7 @@ export function SpotifyEmbed({
 
   return (
     <iframe
-      className="w-full rounded-(--radius)"
+      className="w-full rounded-card"
       style={{ height: kind === "track" ? 152 : 352 }}
       src={`https://open.spotify.com/embed/${kind}/${embedId}`}
       title={`${title} — Spotify player`}

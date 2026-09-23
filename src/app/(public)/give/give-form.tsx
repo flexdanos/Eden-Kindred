@@ -27,7 +27,7 @@ function SubmitButton({ label }: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex w-full items-center justify-center gap-2 bg-brand text-chalk px-7 py-4 font-medium rounded-[var(--radius)] transition-colors hover:bg-brand-hover disabled:opacity-70 disabled:cursor-progress"
+      className="inline-flex w-full items-center justify-center gap-2 bg-brand text-chalk px-7 py-4 font-medium rounded-control transition-colors hover:bg-brand-hover disabled:opacity-70 disabled:cursor-progress"
     >
       {pending && <Loader2 size={17} className="animate-spin" aria-hidden />}
       {pending ? "Taking you to mobile money…" : label}

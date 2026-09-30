@@ -119,11 +119,21 @@ export function NextStepList({
  * where a row belongs is how a page ends up asking for a comparison it did not
  * mean to ask for.
  */
-export function NextStepCard({ step, index }: { step: NextStep; index: number }) {
+export function NextStepCard({
+  step,
+  index,
+  /** False inside a container that already supplies the list item (AutoSlider). */
+  asListItem = true,
+}: {
+  step: NextStep;
+  index: number;
+  asListItem?: boolean;
+}) {
+  const Item = asListItem ? "li" : "div";
   return (
-    <li className="list-none">
-      <Reveal from="below" delay={index * 0.07}>
-        <article className="card-soft flex h-full flex-col overflow-hidden">
+    <Item className="list-none w-full">
+      <Reveal from="below" delay={index * 0.07} className="h-full">
+        <article className="card-soft card-bounce flex h-full flex-col overflow-hidden">
           <ParallaxMedia className="aspect-16/10 w-full" drift={4} scaleFrom={1.06}>
             <CmsImage
               media={step.media ?? null}
@@ -143,6 +153,6 @@ export function NextStepCard({ step, index }: { step: NextStep; index: number })
           </div>
         </article>
       </Reveal>
-    </li>
+    </Item>
   );
 }

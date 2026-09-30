@@ -30,6 +30,12 @@ const nextConfig: NextConfig = {
     // metered mobile data.
     formats: ["image/avif", "image/webp"],
   },
+  // The sign-in page is /login, shared by admin and the musicians' area, but
+  // /admin/login is the address people guess. Send it to the real page rather
+  // than a 404. Temporary (307), so nothing caches it if the route ever moves.
+  async redirects() {
+    return [{ source: "/admin/login", destination: "/login?next=/admin", permanent: false }];
+  },
   experimental: {
     // Server Actions receive form posts from the give flow; the default body
     // limit is fine, but the origin allowlist must include the site URL.

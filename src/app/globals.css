@@ -10,7 +10,7 @@
 
    TWO TOKEN SETS live here, on purpose:
 
-   1. `--brand-*` — the public site (brand register). Oxblood-committed,
+   1. `--brand-*` — the public site (brand register). Forest-green-committed (from the logo),
       image-led, light-only.
    2. shadcn's semantic set (`--primary`, `--muted`, `--card`, …) — the admin
       console (product register). These are mapped ONTO the brand below so the
@@ -23,7 +23,7 @@
 
 :root {
   /* ── Brand palette ──────────────────────────────────────────────────
-     Strategy: Committed. Oxblood carries ~40% of surface area in drenched
+     Strategy: Committed. Forest green carries ~40% of surface area in drenched
      fields. Background stays pure white — putting warmth in both the brand
      colour AND the surface is the tell we're avoiding, and white is also
      the readable ground outdoors on a phone. */
@@ -45,23 +45,27 @@
    *
    * Public only. The admin console stays on --brand-bg; a dense table surface
    * gains nothing from a warm ground. */
-  --brand-paper: oklch(0.975 0.006 45);     /* #faf6f3 — 16.89:1 with ink */
-  --brand-surface: oklch(0.968 0.005 20);   /* #f8f3f3 */
-  --brand-surface-2: oklch(0.94 0.008 20);
-  --brand-ink: oklch(0.2 0.018 20);         /* #1e1313 — 18.18:1 on bg */
-  --brand-quiet: oklch(0.5 0.016 20);       /* #6c605f —  6.05:1 on bg */
-  --brand: oklch(0.38 0.145 12);            /* #7d092d — oxblood       */
-  --brand-hover: oklch(0.33 0.14 12);
+  --brand-paper: oklch(0.977 0.006 129);    /* #f6f8f4 */
+  --brand-surface: oklch(0.96 0.012 138);   /* #eef4ec — sage tint */
+  --brand-surface-2: oklch(0.927 0.024 139); /* #dfebdc */
+  --brand-ink: oklch(0.237 0.03 165);       /* #10231b */
+  --brand-quiet: oklch(0.512 0.024 161);    /* #5b6b62 */
+  --brand: oklch(0.415 0.087 162);          /* #085a3d — logo forest green */
+  --brand-hover: oklch(0.35 0.073 163);     /* #06462f */
   /* Reserved for data visualisation only — a second hue so adjacent chart
      series stay distinguishable. It is deliberately NOT used for links or
-     focus rings: a blue link on an oxblood page reads as browser default
-     rather than as part of the palette. */
-  --brand-accent: oklch(0.52 0.115 252);    /* #316ba9 — printer's blue */
-  --chalk: oklch(0.97 0.008 40);            /* #faf3f1 — on oxblood, 9.89:1 */
-  --hairline: oklch(0.88 0.008 20);
+     focus rings. Deep teal from the logo's corner wedge, darkened so it
+     holds text contrast on white. */
+  --brand-accent: oklch(0.545 0.091 185);   /* #168177 — deep teal */
+  /* The logo's own teal. Too light for text on white — decoration only. */
+  --brand-accent-bright: oklch(0.662 0.115 187); /* #02a99f */
+  --brand-sage: oklch(0.782 0.074 144);     /* #9cc59a — logo sage */
+  --chalk: oklch(0.977 0.006 129);          /* #f6f8f4 — on forest green */
+  --hairline: oklch(0.899 0.026 140);       /* #d5e2d2 */
 
-  --brand-success: oklch(0.5 0.11 150);
-  --brand-warning: oklch(0.62 0.13 75);
+  /* Teal, not green: a green success would read as an ordinary brand button. */
+  --brand-success: oklch(0.545 0.091 185);
+  --brand-warning: oklch(0.626 0.125 70);   /* #b7791f */
 
   /* ── Type ───────────────────────────────────────────────────────────
      Alegreya (humanist book serif) against Schibsted Grotesk (newspaper
@@ -152,18 +156,18 @@
   --accent: var(--brand-surface-2);
   --accent-foreground: var(--brand-ink);
 
-  --destructive: oklch(0.48 0.19 26);
+  --destructive: oklch(0.5 0.182 30);       /* #b42318 */
   --border: var(--hairline);
   --input: var(--hairline);
   --ring: var(--brand);
 
-  /* Data viz: a single-hue oxblood ramp, plus the accent for contrast
-     series. Ordered light-to-dark so adjacent series stay distinguishable. */
-  --chart-1: oklch(0.38 0.145 12);
-  --chart-2: oklch(0.52 0.115 252);
-  --chart-3: oklch(0.58 0.12 30);
-  --chart-4: oklch(0.7 0.09 60);
-  --chart-5: oklch(0.5 0.016 20);
+  /* Data viz: forest green, the accent teal, then sage and the logo's
+     people-mark amber and purple for further series. */
+  --chart-1: oklch(0.415 0.087 162);
+  --chart-2: oklch(0.545 0.091 185);
+  --chart-3: oklch(0.782 0.074 144);
+  --chart-4: oklch(0.79 0.15 75);
+  --chart-5: oklch(0.45 0.14 330);
 
   --sidebar: var(--brand-surface);
   --sidebar-foreground: var(--brand-ink);
@@ -178,43 +182,44 @@
 /* The PUBLIC site is light-only, deliberately. This dark set exists for the
    admin console, where a late-night editing session is a real scenario. */
 .dark {
-  --background: oklch(0.16 0.008 20);
-  --foreground: oklch(0.96 0.005 40);
-  --card: oklch(0.2 0.01 20);
-  --card-foreground: oklch(0.96 0.005 40);
-  --popover: oklch(0.2 0.01 20);
-  --popover-foreground: oklch(0.96 0.005 40);
+  --background: oklch(0.16 0.012 160);
+  --foreground: oklch(0.95 0.01 150);
+  --card: oklch(0.2 0.016 160);
+  --card-foreground: oklch(0.95 0.01 150);
+  --popover: oklch(0.2 0.016 160);
+  --popover-foreground: oklch(0.95 0.01 150);
 
-  /* Oxblood at L 0.38 is too dark to read against a dark ground; lift it. */
-  --primary: oklch(0.62 0.15 14);
-  --primary-foreground: oklch(0.16 0.008 20);
-  --secondary: oklch(0.26 0.012 20);
-  --secondary-foreground: oklch(0.96 0.005 40);
+  /* Forest green at L 0.415 is too dark to read against a dark ground; the
+     logo's sage takes the primary role instead. */
+  --primary: oklch(0.782 0.074 144);
+  --primary-foreground: oklch(0.16 0.012 160);
+  --secondary: oklch(0.26 0.02 160);
+  --secondary-foreground: oklch(0.95 0.01 150);
 
-  --muted: oklch(0.26 0.012 20);
-  --muted-foreground: oklch(0.72 0.012 30);
-  --accent: oklch(0.28 0.014 20);
-  --accent-foreground: oklch(0.96 0.005 40);
+  --muted: oklch(0.26 0.02 160);
+  --muted-foreground: oklch(0.72 0.02 155);
+  --accent: oklch(0.28 0.024 160);
+  --accent-foreground: oklch(0.95 0.01 150);
 
-  --destructive: oklch(0.65 0.19 26);
+  --destructive: oklch(0.68 0.16 28);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.68 0.11 252);
+  --ring: oklch(0.74 0.12 185);
 
-  --chart-1: oklch(0.62 0.15 14);
-  --chart-2: oklch(0.68 0.11 252);
-  --chart-3: oklch(0.72 0.11 40);
-  --chart-4: oklch(0.78 0.09 70);
-  --chart-5: oklch(0.72 0.012 30);
+  --chart-1: oklch(0.782 0.074 144);
+  --chart-2: oklch(0.74 0.12 185);
+  --chart-3: oklch(0.6 0.09 162);
+  --chart-4: oklch(0.8 0.14 75);
+  --chart-5: oklch(0.68 0.13 330);
 
-  --sidebar: oklch(0.2 0.01 20);
-  --sidebar-foreground: oklch(0.96 0.005 40);
-  --sidebar-primary: oklch(0.62 0.15 14);
-  --sidebar-primary-foreground: oklch(0.16 0.008 20);
-  --sidebar-accent: oklch(0.28 0.014 20);
-  --sidebar-accent-foreground: oklch(0.96 0.005 40);
+  --sidebar: oklch(0.2 0.016 160);
+  --sidebar-foreground: oklch(0.95 0.01 150);
+  --sidebar-primary: oklch(0.782 0.074 144);
+  --sidebar-primary-foreground: oklch(0.16 0.012 160);
+  --sidebar-accent: oklch(0.28 0.024 160);
+  --sidebar-accent-foreground: oklch(0.95 0.01 150);
   --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.68 0.11 252);
+  --sidebar-ring: oklch(0.74 0.12 185);
 }
 
 @theme inline {
@@ -222,6 +227,8 @@
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
   --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-bright: var(--brand-accent-bright);
+  --color-sage: var(--brand-sage);
   --color-brand-bg: var(--brand-bg);
   --color-paper: var(--brand-paper);
   --color-surface: var(--brand-surface);
@@ -291,6 +298,68 @@
      admin depends on them staying near-square. */
   --radius-card: var(--card-radius);
   --radius-control: var(--control-radius);
+}
+
+/* ── Ambient + entrance animations ────────────────────────────────────────
+   animate-float, animate-kenburns, animate-pop, animate-slide-in-right and
+   animate-marquee as Tailwind utilities. Transform and opacity only, so they
+   stay on the compositor on a mid-range phone. The reduced-motion block
+   further down collapses every one of them, including the infinite loops. */
+@theme {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --animate-float: ek-float 6s ease-in-out infinite;
+  --animate-kenburns: ek-kenburns 26s ease-in-out infinite alternate;
+  --animate-pop: ek-pop 0.9s var(--ease-spring) both;
+  --animate-slide-in-right: ek-slide-in-right 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-marquee: ek-marquee var(--marquee-duration, 40s) linear infinite;
+
+  @keyframes ek-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+
+  @keyframes ek-kenburns {
+    from {
+      transform: scale(1.04) translate3d(0, 0, 0);
+    }
+    to {
+      transform: scale(1.14) translate3d(-2%, -1.5%, 0);
+    }
+  }
+
+  @keyframes ek-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.7) rotate(-6deg);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes ek-slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(40%);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes ek-marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 /* ── Base ────────────────────────────────────────────────────────────── */
@@ -432,7 +501,7 @@
     color: var(--chalk);
   }
 
-  /* Blue focus rings vanish against oxblood. */
+  /* Green focus rings vanish against the green field. */
   .on-brand :where(a, button, input, [tabindex]):focus-visible {
     outline-color: var(--chalk);
   }
@@ -453,6 +522,31 @@
     background: var(--brand-bg);
     border: 1px solid var(--hairline);
     border-radius: var(--card-radius);
+  }
+
+  /* A card that is a link. Lifts with a small spring overshoot on hover and
+     keyboard focus, and its photograph eases in a touch. Only for cards that
+     go somewhere — a lift on a card that does nothing promises a click that
+     never comes. */
+  .card-bounce {
+    transition:
+      transform 520ms var(--ease-spring),
+      box-shadow 320ms var(--ease-out-quart);
+  }
+
+  .card-bounce:hover,
+  .card-bounce:focus-within {
+    transform: translateY(-8px);
+    box-shadow: 0 18px 40px -18px color-mix(in oklch, var(--brand) 45%, transparent);
+  }
+
+  .card-bounce img {
+    transition: transform 900ms var(--ease-out-expo);
+  }
+
+  .card-bounce:hover img,
+  .card-bounce:focus-within img {
+    transform: scale(1.05);
   }
 
   /* Same card, drenched. For a step that should read as the primary one. */

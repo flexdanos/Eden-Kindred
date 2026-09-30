@@ -60,7 +60,8 @@ Rules:
 
 Motion is part of the build, not a layer applied afterward. Libraries: **Motion** for component and scroll-linked animation, **Lenis** for smooth scroll on desktop.
 
-- Easing is exponential ease-out throughout. No bounce, no elastic, no spring overshoot.
+- Easing is exponential ease-out for fades and scroll-linked motion. Entrances and interactive feedback may use a **soft spring** with a small overshoot: scroll reveals (`Reveal`, `RevealItem`), link-card hover lift (`.card-bounce`), and the hero mark's pop-in. Keep overshoot gentle (Motion `bounce` ≤ 0.4, CSS `--ease-spring`); no elastic wobble.
+- Ambient loops are allowed where they are decorative and transform-only: the hero photograph's slow zoom (`animate-kenburns`), the hero mark's float (`animate-float`), and auto-sliding card rows (`AutoSlider`, which pauses on hover and focus).
 - **Content is visible by default.** Reveals enhance an already-rendered state; nothing is gated behind a scroll trigger, so a headless render or a hidden tab never ships a blank section.
 - Mobile is transform-and-opacity only, and Lenis is disabled below the desktop breakpoint — native scroll is faster and better on a low-end phone.
 - Desktop gets the fuller treatment: scroll-linked image scale, staggered list entrances, sticky section transitions.

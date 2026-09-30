@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 
 /**
  * Four columns, grouped the same way the header sheet groups them, so a
@@ -34,7 +35,7 @@ const COLUMNS = [
     heading: "The community",
     links: [
       { href: "/community", label: "Who we are" },
-      { href: "/team", label: "The people" },
+      { href: "/people", label: "The people" },
       { href: "/programs", label: "Programs" },
       { href: "/teaching", label: "Teaching" },
     ],
@@ -57,9 +58,7 @@ export function SiteFooter() {
       <div className="shell py-(--space-block)">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div>
-            <p className="font-display text-step-2 leading-tight m-0">
-              Eden <em>Kindred</em>
-            </p>
+            <BrandLogo className="h-14" />
             <p className="measure mt-3 text-step--1 text-quiet">
               A community you belong to, not an audience you join.
             </p>

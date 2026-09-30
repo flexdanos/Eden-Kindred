@@ -58,6 +58,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en-GH"
       className={`${alegreya.variable} ${schibsted.variable} h-full antialiased`}
+      // globals.css sets `scroll-behavior: smooth` on <html>. This tells Next
+      // to switch it off while it scrolls to the top of a new route, so a
+      // navigation jumps instead of gliding through the page it is leaving.
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <head suppressHydrationWarning>

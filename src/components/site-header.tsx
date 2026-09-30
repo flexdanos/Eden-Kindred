@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useAuthModal } from "@/components/auth/auth-modal-context";
 import { AccountMenu } from "@/components/auth/account-menu";
+import { BrandLogo } from "@/components/brand-logo";
 import { Cta } from "@/components/cta";
 import { useAuthUser } from "@/components/auth/use-auth-user";
 import { createClient } from "@/lib/supabase/client";
@@ -43,7 +44,7 @@ const NAV_GROUPS: { heading: string; links: { href: string; label: string }[] }[
     heading: "The community",
     links: [
       { href: "/community", label: "Who we are" },
-      { href: "/team", label: "The people" },
+      { href: "/people", label: "The people" },
       { href: "/programs", label: "Programs" },
       { href: "/teaching", label: "Teaching" },
     ],
@@ -168,11 +169,8 @@ export function SiteHeader() {
       }}
     >
       <div className="shell flex items-center justify-between gap-6 py-4 lg:py-5">
-        <Link
-          href="/"
-          className="font-display text-step-1 leading-none tracking-[-0.02em] no-underline"
-        >
-          Eden <em className="italic font-normal">Kindred</em>
+        <Link href="/" className="shrink-0 no-underline">
+          <BrandLogo priority className="h-9 lg:h-11" />
         </Link>
 
         {/* `lg`, not `md`. Adding Connect made six items, and six plus the

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import { AutoSlider } from "@/components/auto-slider";
 import { Cta } from "@/components/cta";
 import { GatheringCard } from "@/components/gathering-card";
 import { NextStepCard, NextStepList, type NextStep } from "@/components/next-step";
-import { Reveal } from "@/components/reveal";
 import { SplitWords } from "@/components/split-words";
 import { PLACEHOLDER } from "@/lib/placeholder-images";
 import { safe } from "@/lib/db/safe";
@@ -80,7 +80,8 @@ const SMALLER_DOORS: NextStep[] = [
     eyebrow: "The people",
     title: "Who you would actually meet",
     body: "Names and faces, so the room is not a room full of strangers on the day you walk in.",
-    href: "/team",
+    // /people, NOT /team — /team is the musicians' area, behind a login.
+    href: "/people",
     cta: "Meet the people",
     seed: 13,
   },
@@ -121,24 +122,8 @@ export default async function ConnectPage() {
 
   return (
     <>
-      <section className="section">
-        <div className="shell">
-          <span className="eyebrow">Connect</span>
-          <h1 className="m-0 mt-5 text-step-5 max-w-[15ch]">
-            <SplitWords text="Start where you *are*." />
-          </h1>
-          <Reveal from="below" delay={0.35}>
-            <p className="measure mt-8 text-step-1 text-quiet">
-              Five ways in, ordered by how little each one asks of you. The first costs
-              nothing at all. Stop at whichever one you like — nobody is counting, and
-              there is no form anywhere on this page.
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
       {/* Times and place, above everything persuasive. Give before asking. */}
-      <section className="pb-(--space-section)">
+      <section className="pt-(--space-block) pb-(--space-section)">
         <div className="shell">
           <GatheringCard next={next} />
         </div>
@@ -158,13 +143,13 @@ export default async function ConnectPage() {
           <p className="measure mt-5 text-quiet">
             Not steps, and not in any order. Take one if it is useful and ignore the rest.
           </p>
-
-          <ul className="mt-(--space-block) m-0 grid list-none gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
-            {SMALLER_DOORS.map((step, i) => (
-              <NextStepCard key={step.href} step={step} index={i} />
-            ))}
-          </ul>
         </div>
+        {/* Outside .shell so the row runs edge to edge while it slides. */}
+        <AutoSlider label="Smaller doors" className="mt-(--space-block)">
+          {SMALLER_DOORS.map((step, i) => (
+            <NextStepCard key={step.href} step={step} index={i} asListItem={false} />
+          ))}
+        </AutoSlider>
       </section>
 
       <section className="on-brand section">

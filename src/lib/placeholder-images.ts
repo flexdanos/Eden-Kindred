@@ -41,7 +41,7 @@ const cdn = (id: string) =>
  * Add entries here as more verified photographs are found, or let real uploads
  * take the slots.
  */
-export const PLACEHOLDER: Record<"hero" | "worship" | "teaching", PlaceholderImage> = {
+export const PLACEHOLDER: Record<"hero" | "worship" | "teaching" | "congregation", PlaceholderImage> = {
   hero: {
     url: cdn("1551752480-6ecf175fcd51"),
     alt: "Two hands resting on the worn skin of a djembe, wax-print cloth behind them",
@@ -57,6 +57,18 @@ export const PLACEHOLDER: Record<"hero" | "worship" | "teaching", PlaceholderIma
     alt: "Hands spread across the keys of an electric piano in low light",
     unsplashId: "1673062187663-26bf343b1a79",
   },
+  /**
+   * The one exception to the detail-shots rule above, at the ministry's
+   * request: the homepage hero wanted a congregation in worship. It sits under
+   * a sage wash, so it reads as atmosphere rather than as a picture of this
+   * congregation, and the alt text says what it is without claiming to be us.
+   * Homepage hero only — the other pages keep their detail shots.
+   */
+  congregation: {
+    url: cdn("1620175406441-1355276b45e5"),
+    alt: "A congregation standing and singing, some with hands lifted, in black and white",
+    unsplashId: "1620175406441-1355276b45e5",
+  },
 };
 
 /**
@@ -68,7 +80,7 @@ export const PLACEHOLDER: Record<"hero" | "worship" | "teaching", PlaceholderIma
  * any slug an admin adds later.
  */
 export const PLACEHOLDER_BY_SLUG: Record<string, PlaceholderImage> = {
-  "home-hero": PLACEHOLDER.hero,
+  "home-hero": PLACEHOLDER.congregation,
   "home-scene-worship": PLACEHOLDER.worship,
   "home-scene-teaching": PLACEHOLDER.teaching,
 };

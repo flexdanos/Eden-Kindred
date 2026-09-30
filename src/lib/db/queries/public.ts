@@ -9,6 +9,7 @@ import {
   events,
   mediaAssets,
   partnershipTiers,
+  people,
   posts,
   programComments,
   programGallery,
@@ -224,6 +225,28 @@ export async function getPublishedProgramId(eventId: string) {
     .limit(1);
 
   return row?.id ?? null;
+}
+
+// ── People ───────────────────────────────────────────────────────────────
+
+export async function getPublishedPeople(limit = 60) {
+  return db
+    .select({
+      id: people.id,
+      name: people.name,
+      role: people.role,
+      bio: people.bio,
+      media: {
+        path: mediaAssets.path,
+        bucket: mediaAssets.bucket,
+        altText: mediaAssets.altText,
+      },
+    })
+    .from(people)
+    .leftJoin(mediaAssets, eq(people.photoMediaId, mediaAssets.id))
+    .where(eq(people.isPublished, true))
+    .orderBy(asc(people.sortOrder), asc(people.name))
+    .limit(limit);
 }
 
 // ── Music ────────────────────────────────────────────────────────────────

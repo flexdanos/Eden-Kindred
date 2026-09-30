@@ -23,7 +23,7 @@ export function PinnedSection({ section }: { section: HomeSection }) {
       className="section"
       media={
         <ParallaxMedia
-          className="m-0 w-full aspect-4/5 max-h-full rounded-(--radius)"
+          className="frame m-0 w-full aspect-4/5 max-h-full"
           drift={7}
           scaleFrom={1.1}
         >

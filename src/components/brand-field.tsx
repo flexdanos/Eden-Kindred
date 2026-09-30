@@ -8,8 +8,8 @@
  * design. So: a composed, on-brand field that reads as deliberate, doesn't
  * pretend to be a photograph, and disappears the moment a real image is set.
  *
- * The composition is the scene DESIGN.md names — a courtyard at dusk, heat off
- * red laterite ground, one strung bulb. Deterministic by `seed`, so server and
+ * The composition is the scene DESIGN.md names — a courtyard at dusk, green
+ * ground, one strung bulb. Deterministic by `seed`, so server and
  * client render identically and hydration stays quiet.
  */
 
@@ -53,23 +53,23 @@ export function BrandField({ seed = 7, className, tone = "deep" }: BrandFieldPro
         <linearGradient id={`${id}-sky`} x1="0" y1="0" x2="0" y2="1">
           <stop
             offset="0%"
-            stopColor={tone === "deep" ? "oklch(0.26 0.1 14)" : "oklch(0.42 0.13 14)"}
+            stopColor={tone === "deep" ? "oklch(0.26 0.06 165)" : "oklch(0.42 0.087 162)"}
           />
           <stop
             offset="100%"
-            stopColor={tone === "deep" ? "oklch(0.46 0.16 18)" : "oklch(0.62 0.13 24)"}
+            stopColor={tone === "deep" ? "oklch(0.46 0.09 180)" : "oklch(0.62 0.1 185)"}
           />
         </linearGradient>
 
         <radialGradient id={`${id}-glow`} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="oklch(0.86 0.1 62)" stopOpacity="0.72" />
-          <stop offset="55%" stopColor="oklch(0.7 0.13 36)" stopOpacity="0.26" />
-          <stop offset="100%" stopColor="oklch(0.5 0.14 20)" stopOpacity="0" />
+          <stop offset="0%" stopColor="oklch(0.88 0.1 85)" stopOpacity="0.72" />
+          <stop offset="55%" stopColor="oklch(0.78 0.08 140)" stopOpacity="0.26" />
+          <stop offset="100%" stopColor="oklch(0.5 0.08 165)" stopOpacity="0" />
         </radialGradient>
 
         <linearGradient id={`${id}-ground`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="oklch(0.34 0.13 22)" />
-          <stop offset="100%" stopColor="oklch(0.19 0.07 18)" />
+          <stop offset="0%" stopColor="oklch(0.34 0.07 162)" />
+          <stop offset="100%" stopColor="oklch(0.19 0.04 165)" />
         </linearGradient>
 
         {/* Grain. Without it the gradients read as a 2015 CSS backdrop. */}
@@ -96,13 +96,13 @@ export function BrandField({ seed = 7, className, tone = "deep" }: BrandFieldPro
         fill={`url(#${id}-ground)`}
       />
 
-      {/* Ridges in the laterite. */}
+      {/* Ridges in the ground. */}
       {bands.map((b, i) => (
         <path
           key={i}
           d={`M0 ${b.y} Q 50 ${b.y - b.curve} 100 ${b.y}`}
           fill="none"
-          stroke="oklch(0.56 0.15 28)"
+          stroke="oklch(0.78 0.074 144)"
           strokeOpacity={b.opacity * 0.5}
           strokeWidth={0.4}
         />

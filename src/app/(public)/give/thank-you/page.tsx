@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { and, eq } from "drizzle-orm";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Cta } from "@/components/cta";
 import { db } from "@/lib/db";
 import { donations } from "@/lib/db/schema";
 import { safe } from "@/lib/db/safe";
@@ -101,19 +101,13 @@ export default async function ThankYouPage({
         )}
 
         <div className="mt-10 flex flex-wrap gap-3">
-          <Link
-            href="/"
-            className="inline-flex items-center bg-brand text-chalk px-6 py-3.5 font-medium no-underline rounded-[var(--radius)] transition-colors hover:bg-brand-hover"
-          >
+          <Cta href="/" arrow={false}>
             Back to the site
-          </Link>
+          </Cta>
           {state === "failed" && (
-            <Link
-              href="/give"
-              className="inline-flex items-center px-6 py-3.5 font-medium no-underline border border-hairline rounded-[var(--radius)] transition-colors hover:border-ink"
-            >
+            <Cta href="/give" variant="outline" arrow={false}>
               Try again
-            </Link>
+            </Cta>
           )}
         </div>
       </div>

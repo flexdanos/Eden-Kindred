@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 
 /**
@@ -20,6 +21,46 @@ import Lenis from "lenis";
  * re-evaluated if it changes mid-session.
  */
 export function SmoothScroll() {
+  const lenisRef = useRef<Lenis | null>(null);
+  const pathname = usePathname();
+  const isFirstPath = useRef(true);
+  const fromHistory = useRef(false);
+
+  /**
+   * Land at the top of every page you click through to.
+   *
+   * Next scrolls a new route into view itself, but Lenis keeps its own
+   * scroll target and animates toward it, so the two fight: pages were
+   * landing part-way down (as far as 550px on /community), with the top of
+   * the page hidden under the sticky header. Snapping Lenis to 0 on each
+   * route change settles it.
+   *
+   * Back and forward are left alone, so the browser can put you back where
+   * you were on the page you return to. A link to a #section is left alone
+   * too, so the anchor scroll still works.
+   */
+  useEffect(() => {
+    const onPop = () => {
+      fromHistory.current = true;
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  useEffect(() => {
+    if (isFirstPath.current) {
+      isFirstPath.current = false;
+      return;
+    }
+    if (fromHistory.current) {
+      fromHistory.current = false;
+      return;
+    }
+    if (window.location.hash) return;
+    lenisRef.current?.scrollTo(0, { immediate: true, force: true });
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   useEffect(() => {
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -41,6 +82,7 @@ export function SmoothScroll() {
         syncTouch: false,
         touchMultiplier: 1,
       });
+      lenisRef.current = lenis;
 
       const raf = (time: number) => {
         lenis?.raf(time);
@@ -53,6 +95,7 @@ export function SmoothScroll() {
       cancelAnimationFrame(frame);
       lenis?.destroy();
       lenis = null;
+      lenisRef.current = null;
     };
 
     const sync = () => {

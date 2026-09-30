@@ -71,7 +71,7 @@ export default async function ReleasePage({
 
           <div className="mt-8 grid gap-10 md:grid-cols-[0.8fr_1.2fr] md:gap-16 md:items-start">
             <Reveal from="left">
-              <div className="relative aspect-square overflow-hidden rounded-(--radius) bg-surface">
+              <div className="frame relative aspect-square">
                 <CmsImage
                   media={release.media}
                   alt={release.media?.altText ?? `${release.title} cover art`}

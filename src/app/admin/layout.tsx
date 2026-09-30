@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ExternalLink, LogOut } from "lucide-react";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { BrandLogo } from "@/components/brand-logo";
 import { assertStaff } from "@/lib/auth/guard";
 import { signOut } from "./actions";
 
@@ -25,12 +26,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           nav that looks like a bookmark. */}
       <aside className="hidden md:flex w-60 2xl:w-72 shrink-0 flex-col justify-between border-r border-border bg-sidebar p-4 2xl:p-5">
         <div>
-          <Link href="/admin" className="block px-3 py-2 no-underline">
-            <span className="font-display text-lg leading-none">
-              Eden <em>Kindred</em>
-            </span>
-            <span className="mt-0.5 block text-[0.6875rem] uppercase tracking-wider text-muted-foreground">
-              Admin
+          <Link href="/admin" className="flex items-center gap-2.5 px-3 py-2 no-underline">
+            <BrandLogo variant="mark" alt="" className="h-9 shrink-0" />
+            <span>
+              <span className="font-display text-lg leading-none">
+                Eden <em>Kindred</em>
+              </span>
+              <span className="mt-0.5 block text-[0.6875rem] uppercase tracking-wider text-muted-foreground">
+                Admin
+              </span>
             </span>
           </Link>
 
@@ -69,8 +73,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {/* Mobile bar — the sidebar collapses structurally rather than the
             type shrinking. */}
         <div className="md:hidden flex items-center justify-between border-b border-border bg-sidebar px-4 py-3">
-          <Link href="/admin" className="font-display text-base no-underline">
-            Eden <em>Kindred</em> Admin
+          <Link href="/admin" className="flex items-center gap-2 font-display text-base no-underline">
+            <BrandLogo variant="mark" alt="" className="h-7 shrink-0" />
+            <span>
+              Eden <em>Kindred</em> Admin
+            </span>
           </Link>
           <form action={signOut}>
             <button type="submit" aria-label="Sign out" className="p-1.5">

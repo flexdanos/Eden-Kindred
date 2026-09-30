@@ -6,15 +6,56 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useAuthModal } from "@/components/auth/auth-modal-context";
 import { AccountMenu } from "@/components/auth/account-menu";
+import { BrandLogo } from "@/components/brand-logo";
+import { Cta } from "@/components/cta";
 import { useAuthUser } from "@/components/auth/use-auth-user";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV = [
+  { href: "/connect", label: "Connect" },
   { href: "/music", label: "Music" },
   { href: "/community", label: "Community" },
   { href: "/programs", label: "Programs" },
   { href: "/teaching", label: "Teaching" },
   { href: "/partnership", label: "Partnership" },
+];
+
+/**
+ * The sheet groups where the bar cannot.
+ *
+ * Six flat links in a column tell a newcomer nothing about which one to press
+ * first. The reference site's menu solves this by grouping under headings, and
+ * the grouping is the useful part: "Start here" is a recommendation, and a
+ * guarded first-time visitor is exactly the reader who needs one.
+ *
+ * The order inside each group is the same cost-ordering /connect uses — the
+ * cheapest thing to do is always the first link.
+ */
+const NAV_GROUPS: { heading: string; links: { href: string; label: string }[] }[] = [
+  {
+    heading: "Start here",
+    links: [
+      { href: "/connect", label: "Ways in" },
+      { href: "/music", label: "Music" },
+      { href: "/join", label: "Come to a program" },
+    ],
+  },
+  {
+    heading: "The community",
+    links: [
+      { href: "/community", label: "Who we are" },
+      { href: "/people", label: "The people" },
+      { href: "/programs", label: "Programs" },
+      { href: "/teaching", label: "Teaching" },
+    ],
+  },
+  {
+    heading: "Partnership",
+    links: [
+      { href: "/partnership", label: "Become a partner" },
+      { href: "/give", label: "Give once" },
+    ],
+  },
 ];
 
 /**
@@ -117,21 +158,27 @@ export function SiteHeader() {
       ref={headerRef}
       className="sticky top-0 z-(--z-sticky) transition-colors duration-300"
       style={{
-        background: scrolled ? "color-mix(in oklch, var(--brand-bg) 92%, transparent)" : "transparent",
+        // Paper, not white: the bar now condenses over a warm ground, and
+        // frosting it with --brand-bg left a visibly cooler strip across the
+        // top of every page.
+        background: scrolled
+          ? "color-mix(in oklch, var(--brand-paper) 92%, transparent)"
+          : "transparent",
         backdropFilter: scrolled ? "blur(10px)" : "none",
         borderBottom: scrolled ? "1px solid var(--hairline)" : "1px solid transparent",
       }}
     >
-      <div className="shell flex items-center justify-between gap-6 py-4 md:py-5">
-        <Link
-          href="/"
-          className="font-display text-step-1 leading-none tracking-[-0.02em] no-underline"
-        >
-          Eden <em className="italic font-normal">Kindred</em>
+      <div className="shell flex items-center justify-between gap-6 py-4 lg:py-5">
+        <Link href="/" className="shrink-0 no-underline">
+          <BrandLogo priority className="h-9 lg:h-11" />
         </Link>
 
-        <nav aria-label="Primary" className="hidden md:block">
-          <ul className="flex items-center gap-7 list-none m-0 p-0">
+        {/* `lg`, not `md`. Adding Connect made six items, and six plus the
+            wordmark plus two account controls does not fit a 768px bar without
+            the nav wrapping into the CTA. Tablets get the grouped sheet, which
+            is the better surface for six links anyway. */}
+        <nav aria-label="Primary" className="hidden lg:block">
+          <ul className="flex items-center gap-6 list-none m-0 p-0">
             {NAV.map((item) => {
               const active = pathname.startsWith(item.href);
               return (
@@ -154,7 +201,7 @@ export function SiteHeader() {
             us" up for someone who has already joined is the thing that made it
             read as "you are not in yet". While the check is unresolved the slot
             reserves its width so the header does not shift. */}
-        <div className="hidden md:flex items-center gap-5">
+        <div className="hidden lg:flex items-center gap-5">
           {account === undefined ? (
             <div className="size-9" aria-hidden />
           ) : account ? (
@@ -168,12 +215,9 @@ export function SiteHeader() {
               >
                 Sign in
               </button>
-              <Link
-                href="/join"
-                className="inline-flex items-center bg-brand text-chalk px-5 py-2.5 text-step--1 font-medium no-underline rounded-[var(--radius)] transition-colors hover:bg-brand-hover"
-              >
+              <Cta href="/join" size="sm" arrow={false}>
                 Join us
-              </Link>
+              </Cta>
             </>
           )}
         </div>
@@ -184,8 +228,16 @@ export function SiteHeader() {
           aria-expanded={open}
           aria-controls="mobile-nav"
           aria-label={open ? "Close menu" : "Open menu"}
-          className="md:hidden inline-flex items-center justify-center p-2 -mr-2"
+          className="lg:hidden inline-flex items-center gap-2 p-2 -mr-2"
         >
+          {/* The reference labels its toggle MENU / CLOSE rather than leaving a
+              bare hamburger, and it is right to: the icon alone is a guess for
+              anyone who is not a frequent web user, which describes a fair
+              share of this audience. The word is hidden from screen readers
+              because aria-label already says it. */}
+          <span className="eyebrow hidden sm:block" aria-hidden>
+            {open ? "Close" : "Menu"}
+          </span>
           {open ? <X size={22} aria-hidden /> : <Menu size={22} aria-hidden />}
         </button>
       </div>
@@ -195,22 +247,34 @@ export function SiteHeader() {
       <div
         id="mobile-nav"
         hidden={!open}
-        className="md:hidden fixed inset-x-0 top-(--header-h,64px) bottom-0 overflow-y-auto overscroll-contain bg-brand-bg border-t border-hairline"
+        className="lg:hidden fixed inset-x-0 top-(--header-h,64px) bottom-0 overflow-y-auto overscroll-contain bg-paper border-t border-hairline"
       >
         <nav aria-label="Primary (mobile)" className="shell py-8">
-          <ul className="flex flex-col gap-1 list-none m-0 p-0">
-            {NAV.map((item) => (
-              <li key={item.href}>
-                <Link
-                  onClick={closeMenu}
-                  href={item.href}
-                  className="block font-display text-step-3 py-3 no-underline border-b border-hairline"
-                >
-                  {item.label}
-                </Link>
-              </li>
+          {/* Grouped, with the first group headed "Start here". Six ungrouped
+              links is a list; grouped, the sheet answers the question a
+              first-time visitor actually has, which is not "what pages exist"
+              but "which one do I press". */}
+          <div className="flex flex-col gap-8 sm:grid sm:grid-cols-2 sm:gap-x-10">
+            {NAV_GROUPS.map((group) => (
+              <section key={group.heading}>
+                <h2 className="eyebrow m-0">{group.heading}</h2>
+                <ul className="mt-3 flex flex-col list-none m-0 p-0">
+                  {group.links.map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        onClick={closeMenu}
+                        href={item.href}
+                        aria-current={pathname === item.href ? "page" : undefined}
+                        className="block font-display text-step-2 py-2.5 no-underline border-b border-hairline aria-[current=page]:text-brand"
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
           {/* Same reasoning as the desktop side: once signed in, say so and say
               as whom, and stop inviting someone to join what they have joined.
               There is no dropdown here — a sheet has the room to state it
@@ -227,27 +291,28 @@ export function SiteHeader() {
                   closeMenu();
                   void signOut();
                 }}
-                className="mt-5 inline-flex w-full items-center justify-center border border-hairline px-6 py-4 text-step-0 font-medium rounded-(--radius)"
+                className="mt-5 inline-flex w-full items-center justify-center border border-hairline px-6 py-4 text-step-0 font-medium rounded-control"
               >
                 Sign out
               </button>
             </div>
           ) : (
             <>
-              <Link
-                onClick={closeMenu}
+              <Cta
                 href="/join"
-                className="mt-8 inline-flex w-full items-center justify-center bg-brand text-chalk px-6 py-4 text-step-0 font-medium no-underline rounded-(--radius)"
+                onClick={closeMenu}
+                arrow={false}
+                className="mt-8 w-full justify-center text-step-0"
               >
                 Join us
-              </Link>
+              </Cta>
               <button
                 type="button"
                 onClick={() => {
                   closeMenu();
                   handleAccountClick();
                 }}
-                className="mt-4 inline-flex w-full items-center justify-center border border-hairline px-6 py-4 text-step-0 font-medium rounded-(--radius)"
+                className="mt-4 inline-flex w-full items-center justify-center border border-hairline px-6 py-4 text-step-0 font-medium rounded-control"
               >
                 Sign in
               </button>

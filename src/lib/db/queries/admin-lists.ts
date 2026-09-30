@@ -7,6 +7,7 @@ import {
   events,
   mediaAssets,
   partnershipTiers,
+  people,
   posts,
   programComments,
   programGallery,
@@ -142,6 +143,24 @@ export async function getReleaseById(id: string) {
     .orderBy(asc(releaseTracks.trackNumber));
 
   return { ...row, tracks };
+}
+
+export async function listPeople() {
+  return db
+    .select({
+      id: people.id,
+      name: people.name,
+      role: people.role,
+      isPublished: people.isPublished,
+      sortOrder: people.sortOrder,
+    })
+    .from(people)
+    .orderBy(asc(people.sortOrder), asc(people.name));
+}
+
+export async function getPersonById(id: string) {
+  const [row] = await db.select().from(people).where(eq(people.id, id)).limit(1);
+  return row ?? null;
 }
 
 export async function listTeamResources() {

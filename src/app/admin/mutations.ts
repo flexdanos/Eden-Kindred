@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -9,6 +10,7 @@ import {
   donations,
   events,
   partnershipTiers,
+  people,
   posts,
   programComments,
   programGallery,
@@ -529,6 +531,78 @@ export async function saveRelease(
   revalidatePath("/admin/releases");
   revalidatePath("/music");
   return ok(published ? "Published." : "Saved as a draft.");
+}
+
+// ── People ───────────────────────────────────────────────────────────────
+
+const personSchema = z.object({
+  id: z.string().uuid().optional().or(z.literal("")),
+  name: z.string().trim().min(1, "Add their name").max(120),
+  role: optionalText(120),
+  bio: optionalText(2000),
+  photoMediaId: optionalUuid,
+  sortOrder: z.string().optional().or(z.literal("")),
+  isPublished: z.union([z.literal("on"), z.literal("")]).optional(),
+});
+
+export async function savePerson(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const auth = await requireStaff();
+  if (!auth.ok) return fail(auth.error);
+
+  const parsed = personSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Check the highlighted fields.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+
+  const d = parsed.data;
+  const published = d.isPublished === "on";
+
+  const values = {
+    name: d.name,
+    role: d.role || null,
+    bio: d.bio || null,
+    photoMediaId: d.photoMediaId,
+    sortOrder: Number(d.sortOrder || 0),
+    isPublished: published,
+    updatedAt: new Date(),
+  };
+
+  try {
+    if (d.id) await db.update(people).set(values).where(eq(people.id, d.id));
+    else await db.insert(people).values(values);
+  } catch (error) {
+    console.error("[admin] savePerson", error);
+    return fail("Saving that failed.");
+  }
+
+  revalidatePath("/admin/people");
+  revalidatePath("/people");
+  return ok(published ? "Published." : "Saved as a draft.");
+}
+
+/**
+ * Admin-only, matching the RLS delete policy. Someone asking to come off the
+ * site is the usual reason, and unpublishing alone would keep their name and
+ * bio sitting in the database after they asked for it to go.
+ */
+export async function deletePerson(formData: FormData): Promise<void> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return;
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await db.delete(people).where(eq(people.id, id));
+  revalidatePath("/admin/people");
+  revalidatePath("/people");
+  redirect("/admin/people");
 }
 
 // ── Team resources ───────────────────────────────────────────────────────

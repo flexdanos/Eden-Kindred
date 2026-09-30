@@ -433,6 +433,31 @@ export const teamResources = pgTable(
   (t) => [index("team_resources_event_idx").on(t.eventId, t.createdAt)],
 );
 
+// ── People (public "who you would meet" page) ───────────────────────────
+// Editorial, NOT derived from `profiles`. A profile is a login — it carries a
+// phone number and whether someone plays in the band — and nobody consents to
+// being published by signing in. A row here is written by staff, about someone
+// who has agreed to appear, and holds only what the public page shows.
+
+export const people = pgTable(
+  "people",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    /** What they do here, in a few words: "Worship lead", "Hosts a kinship group". */
+    role: text("role"),
+    bio: text("bio"),
+    photoMediaId: uuid("photo_media_id").references(() => mediaAssets.id, {
+      onDelete: "set null",
+    }),
+    isPublished: boolean("is_published").notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("people_published_idx").on(t.isPublished, t.sortOrder)],
+);
+
 // ── Webhook event log ───────────────────────────────────────────────────
 // Paystack retries. Recording each delivery id makes replay a no-op rather
 // than a duplicated donation.

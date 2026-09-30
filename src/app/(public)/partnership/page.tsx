@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
+import { Cta } from "@/components/cta";
 import { Reveal } from "@/components/reveal";
 import { SplitWords } from "@/components/split-words";
 import { safe } from "@/lib/db/safe";
@@ -28,7 +28,8 @@ export default async function PartnershipPage() {
     <>
       <section className="section">
         <div className="shell">
-          <h1 className="m-0 text-step-5 max-w-[16ch]">
+          <span className="eyebrow">Partnership</span>
+          <h1 className="m-0 mt-5 text-step-5 max-w-[16ch]">
             <SplitWords text="The work is *funded* by the people in it" />
           </h1>
           <Reveal from="below" delay={0.4}>
@@ -74,11 +75,17 @@ export default async function PartnershipPage() {
             ].map((entry, i) => (
               <li key={entry.item}>
                 <Reveal from="below" delay={i * 0.06}>
-                  <h3 className="m-0 inline-flex items-baseline gap-2 text-step-1">
-                    <Check size={16} aria-hidden className="translate-y-0.5 text-brand" />
-                    {entry.item}
-                  </h3>
-                  <p className="measure m-0 mt-2 text-quiet">{entry.detail}</p>
+                  <div className="card-soft h-full p-7">
+                    <h3 className="m-0 inline-flex items-baseline gap-2 text-step-1">
+                      <Check
+                        size={16}
+                        aria-hidden
+                        className="translate-y-0.5 text-brand"
+                      />
+                      {entry.item}
+                    </h3>
+                    <p className="measure m-0 mt-2 text-quiet">{entry.detail}</p>
+                  </div>
                 </Reveal>
               </li>
             ))}
@@ -98,11 +105,17 @@ export default async function PartnershipPage() {
               is told which level anyone else chose.
             </p>
 
-            <ul className="mt-(--space-block) grid gap-px bg-hairline list-none m-0 p-0 border border-hairline md:grid-cols-3">
+            {/* Separate cards, not a hairline-divided grid.
+                The grid read as a pricing table, which is the one thing
+                PRODUCT.md is most concerned these should not be — the copy
+                directly above says the names are a convenience and any amount
+                is a real partnership, and a table of three columns with prices
+                in them argues the opposite before the copy gets read. */}
+            <ul className="mt-(--space-block) grid gap-6 list-none m-0 p-0 md:grid-cols-3">
               {tiers.map((tier, i) => (
-                <li key={tier.id} className="bg-brand-bg">
+                <li key={tier.id}>
                   <Reveal from="below" delay={i * 0.07}>
-                    <div className="flex h-full flex-col p-8">
+                    <div className="card-soft flex h-full flex-col p-8">
                       <h3 className="m-0 text-step-2">{tier.name}</h3>
                       <p className="m-0 mt-3 text-step-1">
                         {formatMinor(tier.amountMinor, { showDecimals: false })}
@@ -114,13 +127,14 @@ export default async function PartnershipPage() {
                       {tier.description && (
                         <p className="m-0 mt-4 text-quiet">{tier.description}</p>
                       )}
-                      <Link
+                      <Cta
                         href={`/give?tier=${tier.id}`}
-                        className="mt-auto pt-7 inline-flex items-center gap-2 text-brand no-underline hover:underline underline-offset-4"
+                        variant="quiet"
+                        arrow
+                        className="mt-auto pt-7"
                       >
                         Partner at this level
-                        <ArrowRight size={15} aria-hidden />
-                      </Link>
+                      </Cta>
                     </div>
                   </Reveal>
                 </li>
@@ -179,19 +193,10 @@ export default async function PartnershipPage() {
           </div>
 
           <div className="mt-(--space-block) flex flex-wrap gap-3">
-            <Link
-              href="/give"
-              className="inline-flex items-center gap-2 bg-brand text-chalk px-7 py-4 font-medium no-underline rounded-(--radius) transition-colors hover:bg-brand-hover"
-            >
-              Become a partner
-              <ArrowRight size={16} aria-hidden />
-            </Link>
-            <Link
-              href="/give"
-              className="inline-flex items-center px-7 py-4 font-medium no-underline border border-hairline rounded-(--radius) transition-colors hover:border-ink"
-            >
+            <Cta href="/give">Become a partner</Cta>
+            <Cta href="/give" variant="outline" arrow={false}>
               Give once instead
-            </Link>
+            </Cta>
           </div>
         </div>
       </section>

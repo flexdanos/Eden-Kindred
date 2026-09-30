@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BrandLogo } from "@/components/brand-logo";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = {
@@ -22,9 +23,7 @@ export default async function LoginPage({
   return (
     <main className="flex min-h-svh items-center justify-center px-(--gutter) py-16">
       <div className="w-full max-w-[26rem]">
-        <p className="font-display text-step-2 leading-none m-0">
-          Eden <em>Kindred</em>
-        </p>
+        <BrandLogo priority className="h-12" />
         <h1 className="m-0 mt-8 text-step-3">
           {stepUp ? "One more step" : "Sign in"}
         </h1>

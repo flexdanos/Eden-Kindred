@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { CmsImage } from "@/components/cms-image";
+import { Cta } from "@/components/cta";
 import { Prose } from "@/components/prose";
 import { Reveal } from "@/components/reveal";
 import { SplitWords } from "@/components/split-words";
@@ -77,7 +78,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       {post.media && (
         <section className="shell">
           <ParallaxMedia
-            className="w-full aspect-16/9 rounded-(--radius)"
+            className="frame w-full aspect-16/9"
             drift={6}
             scaleFrom={1.08}
           >
@@ -106,12 +107,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             Most of what is written here started as an argument in a room. If you want the
             room rather than the page, the programs are open.
           </p>
-          <Link
-            href="/programs"
-            className="mt-8 inline-flex items-center bg-brand text-chalk px-7 py-4 font-medium no-underline rounded-(--radius) transition-colors hover:bg-brand-hover"
-          >
+          <Cta href="/programs" className="mt-8">
             See our programs
-          </Link>
+          </Cta>
         </div>
       </section>
     </article>

@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { Cta } from "@/components/cta";
 import { Reveal } from "@/components/reveal";
 import { SplitWords } from "@/components/split-words";
 import type { HomeSection } from "@/lib/db/queries/public";
@@ -31,7 +30,7 @@ export function CtaSection({ section }: { section: HomeSection }) {
 
         {(data.secondaryTitle || data.secondaryBody || data.primaryLabel || data.secondaryLabel) && (
           <Reveal delay={0.1}>
-            <div className="border border-hairline bg-brand-bg p-8">
+            <div className="card-soft p-8">
               {data.secondaryTitle && (
                 <h3 className="m-0 text-step-1">{data.secondaryTitle}</h3>
               )}
@@ -40,21 +39,12 @@ export function CtaSection({ section }: { section: HomeSection }) {
               )}
               <div className="mt-7 flex flex-wrap gap-3">
                 {data.primaryLabel && data.primaryHref && (
-                  <Link
-                    href={data.primaryHref}
-                    className="inline-flex items-center gap-2 bg-brand text-chalk px-6 py-3.5 font-medium no-underline rounded-[var(--radius)] transition-colors hover:bg-brand-hover"
-                  >
-                    {data.primaryLabel}
-                    <ArrowRight size={16} aria-hidden />
-                  </Link>
+                  <Cta href={data.primaryHref}>{data.primaryLabel}</Cta>
                 )}
                 {data.secondaryLabel && data.secondaryHref && (
-                  <Link
-                    href={data.secondaryHref}
-                    className="inline-flex items-center px-6 py-3.5 font-medium no-underline border border-hairline rounded-[var(--radius)] transition-colors hover:border-ink"
-                  >
+                  <Cta href={data.secondaryHref} variant="outline" arrow={false}>
                     {data.secondaryLabel}
-                  </Link>
+                  </Cta>
                 )}
               </div>
             </div>

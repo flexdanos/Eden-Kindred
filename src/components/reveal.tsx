@@ -10,7 +10,7 @@ type RevealProps = {
   /** Direction the content settles from. `none` fades only. */
   from?: "below" | "left" | "right" | "none";
   delay?: number;
-  /** Distance in px. Kept small on purpose — big travel reads as a template. */
+  /** Distance in px. Enough travel for the spring's overshoot to read. */
   distance?: number;
   as?: "div" | "section" | "li" | "article" | "figure";
 };
@@ -38,7 +38,7 @@ export function Reveal({
   className,
   from = "below",
   delay = 0,
-  distance = 18,
+  distance = 32,
   as = "div",
 }: RevealProps) {
   const reduced = useReducedMotion();
@@ -58,9 +58,10 @@ export function Reveal({
       whileInView={{ opacity: 1, x: 0, y: 0 }}
       viewport={{ once: true, margin: "0px 0px -12% 0px" }}
       transition={{
-        duration: 0.72,
-        delay,
-        ease: [0.16, 1, 0.3, 1], // ease-out-expo
+        // Position settles on a spring with a small overshoot, so things land
+        // with a bounce; opacity stays on a plain ease so it never flickers.
+        default: { type: "spring", bounce: 0.35, duration: 0.9, delay },
+        opacity: { duration: 0.5, delay, ease: [0.16, 1, 0.3, 1] },
       }}
     >
       {children}
@@ -116,8 +117,16 @@ export function RevealItem({
     <motion.li
       className={className}
       variants={{
-        hidden: { opacity: 0, y: 14 },
-        shown: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
+        hidden: { opacity: 0, y: 28, scale: 0.97 },
+        shown: {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: {
+            default: { type: "spring", bounce: 0.4, duration: 0.8 },
+            opacity: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
+          },
+        },
       }}
     >
       {children}

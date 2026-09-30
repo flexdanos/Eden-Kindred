@@ -406,6 +406,38 @@ create policy "release_tracks: staff manage"
   using (public.is_admin_or_editor())
   with check (public.is_admin_or_editor());
 
+-- ── people ───────────────────────────────────────────────────────────────
+-- The public "who you would meet" page. Published rows only: a draft is
+-- someone who has not yet agreed to appear, and must not be readable.
+-- Deleting is admin-only, same as releases.
+alter table public.people enable row level security;
+
+drop policy if exists "people: public reads published" on public.people;
+create policy "people: public reads published"
+  on public.people for select
+  using (is_published = true);
+
+drop policy if exists "people: staff read all" on public.people;
+create policy "people: staff read all"
+  on public.people for select
+  using (public.is_admin_or_editor());
+
+drop policy if exists "people: staff insert" on public.people;
+create policy "people: staff insert"
+  on public.people for insert
+  with check (public.is_admin_or_editor());
+
+drop policy if exists "people: staff update" on public.people;
+create policy "people: staff update"
+  on public.people for update
+  using (public.is_admin_or_editor())
+  with check (public.is_admin_or_editor());
+
+drop policy if exists "people: admins delete" on public.people;
+create policy "people: admins delete"
+  on public.people for delete
+  using (public.is_admin());
+
 -- ── team_resources ───────────────────────────────────────────────────────
 -- NO public policy at any level. Rehearsal material, unreleased arrangements,
 -- and who is playing when are none of the internet's business, and with RLS on

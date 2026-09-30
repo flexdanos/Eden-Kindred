@@ -112,7 +112,7 @@ export default async function ProgramPage({
       {event.media && (
         <section className="shell">
           <ParallaxMedia
-            className="w-full aspect-16/9 rounded-(--radius)"
+            className="frame w-full aspect-16/9"
             drift={6}
             scaleFrom={1.08}
           >

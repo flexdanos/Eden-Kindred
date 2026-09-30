@@ -46,12 +46,13 @@ const hex = ([r, g, b]) =>
 // Keep in step with :root in src/app/globals.css
 const TOKENS = {
   "brand-bg": [1.0, 0.0, 0],
-  "brand-surface": [0.968, 0.005, 20],
-  "brand-ink": [0.2, 0.018, 20],
-  "brand-quiet": [0.5, 0.016, 20],
-  brand: [0.38, 0.145, 12],
-  "brand-accent": [0.52, 0.115, 252],
-  chalk: [0.97, 0.008, 40],
+  "brand-paper": [0.977, 0.006, 129],
+  "brand-surface": [0.96, 0.012, 138],
+  "brand-ink": [0.237, 0.03, 165],
+  "brand-quiet": [0.512, 0.024, 161],
+  brand: [0.415, 0.087, 162],
+  "brand-accent": [0.545, 0.091, 185],
+  chalk: [0.977, 0.006, 129],
 };
 
 const c = {};
@@ -70,10 +71,14 @@ for (const [name, v] of Object.entries(TOKENS)) {
 const CHECKS = [
   ["body text on bg", c["brand-ink"], c["brand-bg"], 7],
   ["muted text on bg", c["brand-quiet"], c["brand-bg"], 4.5],
+  // Paper is the public site's page ground, so these two are the ratios that
+  // actually decide daylight readability for most visitors.
+  ["body text on paper", c["brand-ink"], c["brand-paper"], 7],
+  ["muted text on paper", c["brand-quiet"], c["brand-paper"], 4.5],
   ["body text on surface", c["brand-ink"], c["brand-surface"], 7],
-  ["chalk on oxblood", c.chalk, c.brand, 4.5],
-  ["white on oxblood", c["brand-bg"], c.brand, 4.5],
-  ["oxblood vs accent", c.brand, c["brand-accent"], 1.7],
+  ["chalk on brand green", c.chalk, c.brand, 4.5],
+  ["white on brand green", c["brand-bg"], c.brand, 4.5],
+  ["brand vs accent", c.brand, c["brand-accent"], 1.7],
   ["accent link on bg", c["brand-accent"], c["brand-bg"], 4.5],
 ];
 

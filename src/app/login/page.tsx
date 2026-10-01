@@ -1,47 +1,16 @@
-import type { Metadata } from "next";
-import { BrandLogo } from "@/components/brand-logo";
-import { LoginForm } from "./login-form";
+import { redirect } from "next/navigation";
+import { signInUrl } from "@/lib/auth/sign-in-url";
 
-export const metadata: Metadata = {
-  title: "Sign in",
-  robots: { index: false, follow: false },
-};
-
+/**
+ * There is no separate login page any more — everyone signs in through the
+ * modal. This route stays so old links and bookmarks still land somewhere
+ * useful: it hands over to the home page with the modal open.
+ */
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string; reason?: string }>;
 }) {
   const { next, reason } = await searchParams;
-
-  // Arrived from an admin gate while holding an emailed-code session: they are
-  // signed in as the right person, just not strongly enough for the console.
-  // Saying so matters — otherwise a signed-in admin is handed a sign-in form
-  // with no explanation and reasonably concludes it is broken.
-  const stepUp = reason === "step-up";
-
-  return (
-    <main className="flex min-h-svh items-center justify-center px-(--gutter) py-16">
-      <div className="w-full max-w-[26rem]">
-        <BrandLogo priority className="h-12" />
-        <h1 className="m-0 mt-8 text-step-3">
-          {stepUp ? "One more step" : "Sign in"}
-        </h1>
-
-        {stepUp ? (
-          <p className="mt-3 text-quiet text-step--1">
-            You&apos;re already signed in, but the admin console needs your password
-            rather than an emailed code. This keeps access to the console from
-            resting on inbox access alone.
-          </p>
-        ) : (
-          <p className="mt-3 text-quiet text-step--1">
-            Sign in with your password, or have us email you a 6-digit code.
-          </p>
-        )}
-
-        <LoginForm next={next ?? "/admin"} forcePassword={stepUp} />
-      </div>
-    </main>
-  );
+  redirect(signInUrl(next, reason));
 }

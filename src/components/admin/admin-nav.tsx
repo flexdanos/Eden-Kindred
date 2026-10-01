@@ -12,8 +12,10 @@ import {
   Music2,
   HandCoins,
   Image as ImageIcon,
+  KeyRound,
   LayoutTemplate,
   Settings,
+  UserCog,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -24,6 +26,8 @@ type NavItem = {
   icon: LucideIcon;
   /** Match the path exactly. Needed for /admin, which prefixes every child. */
   exact?: boolean;
+  /** Hidden from editors. The page itself still enforces this with assertAdmin(). */
+  adminOnly?: boolean;
 };
 
 const GROUPS: { label: string; items: NavItem[] }[] = [
@@ -56,11 +60,15 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
   },
   {
     label: "System",
-    items: [{ href: "/admin/settings", label: "Settings", icon: Settings }],
+    items: [
+      { href: "/admin/users", label: "Users", icon: UserCog, adminOnly: true },
+      { href: "/admin/settings", label: "Settings", icon: Settings },
+      { href: "/admin/account", label: "Your account", icon: KeyRound },
+    ],
   },
 ];
 
-export function AdminNav() {
+export function AdminNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
 
   // Horizontal scroller on mobile, sidebar from md up. Stacking ten links
@@ -77,7 +85,9 @@ export function AdminNav() {
             {group.label}
           </h2>
           <ul className="list-none m-0 p-0 flex gap-1 md:flex-col md:gap-0.5">
-            {group.items.map((item) => {
+            {group.items
+              .filter((item) => isAdmin || !item.adminOnly)
+              .map((item) => {
               const active = item.exact
                 ? pathname === item.href
                 : pathname.startsWith(item.href);

@@ -2,6 +2,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { AuthModalProvider } from "@/components/auth/auth-modal-context";
+import { AdminShortcut } from "@/components/admin/admin-shortcut";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -30,6 +31,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         </main>
         <SiteFooter />
       </div>
+      <AdminShortcut />
     </AuthModalProvider>
   );
 }

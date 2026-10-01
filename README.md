@@ -58,38 +58,43 @@ Then in the Supabase SQL editor, run in order:
 2. `supabase/storage.sql` — the `media` bucket and its object policies
 3. `supabase/seed.sql` — optional starter content
 
-### 4. Auth emails — codes, not links
+### 4. Auth — one modal, email and password
 
-**Both sign-in surfaces verify a typed 6-digit code, and neither can handle a
-clicked link.** Nothing in the app renders a link handler any more, so if the
-email carries a link the flow is simply broken.
+Everyone — partners, musicians and staff — signs in or creates an account in
+the same modal, with an email and a password. There is no separate staff login;
+`/login` only redirects to the home page with the modal open, and the admin
+gates send people there with `next=/admin`.
 
-Whether it carries a code or a link is a dashboard setting, not code. In
-**Authentication → Emails → Templates**, paste over the message body of:
+In **Authentication → Providers → Email**, keep **Confirm email ON**. A new
+account then gets a 6-digit code to type into the modal before it is signed in.
+That confirmation is also what makes the super-admin rule below safe.
+
+Two emails must carry a code, not a link. In **Authentication → Emails →
+Templates**, paste over the stock body of:
 
 | Template | File | Sent when |
 |---|---|---|
-| Magic Link | `supabase/email-templates/magic-link.html` | `signInWithOtp` on an address that already has an `auth.users` row |
-| Confirm signup | `supabase/email-templates/confirm-signup.html` | `signInWithOtp` on a brand-new address |
+| Confirm signup | `supabase/email-templates/confirm-signup.html` | Someone creates an account |
+| Reset Password | `supabase/email-templates/reset-password.html` | Someone uses "Forgot password?" |
 
-Both ship from Supabase with a `{{ .ConfirmationURL }}` link body and no code.
-Update only one and you split the audience — returning partners get a code,
-first-time ones get a link, and the bug looks intermittent.
+Miss the second one and password resets arrive as a link the app cannot
+handle. Link-scanning
+mail filters (Microsoft Defender Safe Links among them) pre-fetch every URL in
+an email and burn single-use links before the recipient clicks; a typed code
+has no URL to pre-fetch. (`magic-link.html` is no longer used — nothing signs
+in with an emailed code any more.)
 
-The reason to prefer a code here isn't only taste: link-scanning mail filters
-(Microsoft Defender Safe Links among them) pre-fetch every URL in an email,
-which burns a single-use magic-link token before the recipient clicks it. They
-then see "link expired" on their first attempt. A typed code has no URL to
-pre-fetch.
+### 5. Admins
 
-### 5. Make yourself an admin
+**flexdanso@gmail.com is the default super admin.** Create that account in
+the modal and confirm the email; the `handle_new_user` / `handle_user_confirmed`
+triggers in `supabase/rls-policies.sql` make it `admin` automatically. If the
+account already existed when you ran that file, it was promoted on the spot.
 
-Sign in once at `/login` to create your `profiles` row, then:
+Everyone else signs up as a `member`. To promote someone:
 
-```sql
-update public.profiles set role = 'admin' where id = (
-  select id from auth.users where email = 'you@example.com'
-);
+```bash
+node scripts/set-role.mjs someone@example.com editor   # or admin
 ```
 
 ### 6. Paystack

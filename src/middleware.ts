@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
+import { signInUrl } from "@/lib/auth/sign-in-url";
 
 /**
  * Refreshes the Supabase session cookie on every request, and turns unauthed
@@ -43,10 +44,9 @@ export async function middleware(request: NextRequest) {
     );
 
     if (request.nextUrl.pathname.startsWith("/admin")) {
-      const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = "/login";
-      redirectUrl.searchParams.set("next", request.nextUrl.pathname);
-      return NextResponse.redirect(redirectUrl);
+      return NextResponse.redirect(
+        new URL(signInUrl(request.nextUrl.pathname, "admin"), request.url),
+      );
     }
     return response;
   }
@@ -81,10 +81,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!user && pathname.startsWith("/admin")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL(signInUrl(pathname, "admin"), request.url));
   }
 
   return response;

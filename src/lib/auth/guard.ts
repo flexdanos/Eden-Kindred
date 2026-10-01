@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
+import { signInUrl } from "./sign-in-url";
 
 export type Role = "admin" | "editor" | "member";
 
@@ -123,14 +124,11 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
 /**
  * How the CURRENT session was authenticated, and at what assurance level.
  *
- * The public site signs people in with an emailed code (see
- * components/auth/auth-modal.tsx); staff sign in with a password at /login.
- * Both hit the same Supabase project, so both produce a session for the same
- * account — which means a staff member's email is, on its own, enough to reach
- * a session that satisfies a role check. The password would be decorative if
- * role were the only gate.
- *
- * So admin surfaces additionally require HOW: a password, or a second factor.
+ * Everyone signs in with a password through the one modal
+ * (components/auth/auth-modal.tsx). The one other way to hold a session is the
+ * 6-digit code that confirms a brand-new account's email — proof of inbox
+ * access, not of the password. Role alone would let that through, so admin
+ * surfaces additionally require HOW: a password, or a second factor.
  *
  * On trusting these claims: getUser() sends the access token to Supabase,
  * which verifies its signature. Only once that succeeds do we decode the same
@@ -213,13 +211,13 @@ export async function hasStrongAuth(): Promise<boolean> {
  * Staff get in automatically — someone who can edit the whole site being
  * locked out of the rehearsal notes would be theatre, not security.
  *
- * Deliberately does NOT require strong auth. Musicians are a public-side
- * audience who sign in with an emailed code, and chord charts are not worth
- * making them keep a password for.
+ * Deliberately does NOT require strong auth. A musician who has just
+ * confirmed a new account with its emailed code is fine here — chord charts
+ * do not need the step-up the admin console does.
  */
 export async function assertTeamMember(): Promise<SessionUser> {
   const user = await getSessionUser();
-  if (!user) redirect("/login?next=/team");
+  if (!user) redirect(signInUrl("/team", "team"));
 
   const allowed = user.isTeamMember || user.role === "admin" || user.role === "editor";
   if (!allowed) redirect("/?denied=team");
@@ -237,13 +235,13 @@ export async function assertTeamMember(): Promise<SessionUser> {
  */
 export async function assertStaff(): Promise<SessionUser> {
   const user = await getSessionUser();
-  if (!user) redirect("/login?next=/admin");
+  if (!user) redirect(signInUrl("/admin", "admin"));
   if (user.role !== "admin" && user.role !== "editor") redirect("/?denied=1");
 
   // Role says WHO. This says HOW: an emailed-code session belongs to the
   // right person but is not a strong enough proof to run the admin on.
   if (!isDevPreview() && !(await hasStrongAuth())) {
-    redirect("/login?reason=step-up&next=/admin");
+    redirect(signInUrl("/admin", "step-up"));
   }
 
   return user;
@@ -252,11 +250,11 @@ export async function assertStaff(): Promise<SessionUser> {
 /** Stricter variant for destructive and settings-level operations. */
 export async function assertAdmin(): Promise<SessionUser> {
   const user = await getSessionUser();
-  if (!user) redirect("/login?next=/admin");
+  if (!user) redirect(signInUrl("/admin", "admin"));
   if (user.role !== "admin") redirect("/admin?denied=1");
 
   if (!isDevPreview() && !(await hasStrongAuth())) {
-    redirect("/login?reason=step-up&next=/admin");
+    redirect(signInUrl("/admin", "step-up"));
   }
 
   return user;
@@ -281,7 +279,7 @@ export async function requireStaff(): Promise<
   if (!isDevPreview() && !(await hasStrongAuth())) {
     return {
       ok: false,
-      error: "Sign in with your password to make changes. An emailed code isn't enough here.",
+      error: "Sign in with your password to make changes. Your current session came from an email code.",
     };
   }
 
@@ -301,7 +299,7 @@ export async function requireAdmin(): Promise<
   if (!isDevPreview() && !(await hasStrongAuth())) {
     return {
       ok: false,
-      error: "Sign in with your password to make changes. An emailed code isn't enough here.",
+      error: "Sign in with your password to make changes. Your current session came from an email code.",
     };
   }
 

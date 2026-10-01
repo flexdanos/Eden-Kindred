@@ -66,6 +66,22 @@ $$;
 
 -- ── Keep profiles in sync with auth.users ────────────────────────────────
 
+-- The default super admin. This one address is made `admin` automatically —
+-- every other sign-up is a `member` until promoted with scripts/set-role.mjs.
+--
+-- Only once the address is CONFIRMED (email_confirmed_at set). Before that,
+-- anyone could sign up with this email and a password of their choosing; the
+-- confirmation code proves they actually hold the inbox. Keep "Confirm email"
+-- ON in Supabase → Authentication → Providers → Email, or a project with it off
+-- auto-confirms every sign-up and this check proves nothing.
+create or replace function public.is_super_admin_email(addr text)
+returns boolean
+language sql
+immutable
+as $$
+  select lower(coalesce(addr, '')) = 'flexdanso@gmail.com';
+$$;
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -73,11 +89,16 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, full_name, avatar_url)
+  insert into public.profiles (id, full_name, avatar_url, role)
   values (
     new.id,
     new.raw_user_meta_data ->> 'full_name',
-    new.raw_user_meta_data ->> 'avatar_url'
+    new.raw_user_meta_data ->> 'avatar_url',
+    case
+      when public.is_super_admin_email(new.email) and new.email_confirmed_at is not null
+        then 'admin'::role
+      else 'member'::role
+    end
   )
   on conflict (id) do nothing;
   return new;
@@ -88,6 +109,35 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- With "Confirm email" on, the row is inserted unconfirmed, so the promotion
+-- above can't happen at insert. This catches the moment the code is verified.
+create or replace function public.handle_user_confirmed()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if public.is_super_admin_email(new.email) and new.email_confirmed_at is not null then
+    update public.profiles set role = 'admin'::role where id = new.id;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_confirmed on auth.users;
+create trigger on_auth_user_confirmed
+  after update of email_confirmed_at, email on auth.users
+  for each row execute function public.handle_user_confirmed();
+
+-- Backfill: if the super admin's account already exists, promote it now.
+update public.profiles p
+  set role = 'admin'::role
+  from auth.users u
+  where u.id = p.id
+    and public.is_super_admin_email(u.email)
+    and u.email_confirmed_at is not null;
 
 -- ── profiles ─────────────────────────────────────────────────────────────
 alter table public.profiles enable row level security;

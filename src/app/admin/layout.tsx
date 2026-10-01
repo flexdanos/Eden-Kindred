@@ -39,17 +39,20 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </Link>
 
           <div className="mt-6">
-            <AdminNav />
+            <AdminNav isAdmin={user.role === "admin"} />
           </div>
         </div>
 
         <div className="border-t border-border pt-3">
-          <div className="px-3 pb-2">
+          <Link
+            href="/admin/account"
+            className="block rounded-md px-3 pb-2 pt-1 no-underline text-foreground transition-colors duration-150 hover:bg-accent"
+          >
             <p className="m-0 truncate text-sm font-medium">
               {user.fullName ?? user.email}
             </p>
             <p className="m-0 text-xs capitalize text-muted-foreground">{user.role}</p>
-          </div>
+          </Link>
           <Link
             href="/"
             className="flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm no-underline text-foreground/75 transition-colors duration-150 hover:bg-accent hover:text-foreground"
@@ -89,7 +92,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {/* AdminNav owns its own horizontal scroll on mobile; a second
             overflow container here would nest two scrollers. */}
         <div className="md:hidden border-b border-border bg-sidebar px-4 py-3">
-          <AdminNav />
+          <AdminNav isAdmin={user.role === "admin"} />
         </div>
 
         <main className="flex-1 p-5 lg:p-8 2xl:p-12">{children}</main>

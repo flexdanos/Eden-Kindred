@@ -32,53 +32,51 @@ function startOfThisMonth(): Date {
 export async function getDashboardTotals(): Promise<DashboardTotals> {
   const monthStart = startOfThisMonth();
 
-  const [thisMonth, allTime, partners, pledged, missed] = await Promise.all([
-    db
-      .select({
-        total: sum(donations.amountMinor).mapWith(Number),
-        gifts: count(),
-      })
-      .from(donations)
-      .where(and(eq(donations.status, "succeeded"), gte(donations.paidAt, monthStart))),
-
-    db
-      .select({ total: sum(donations.amountMinor).mapWith(Number) })
-      .from(donations)
-      .where(eq(donations.status, "succeeded")),
-
-    db
-      .select({ n: count() })
-      .from(pledges)
-      .where(eq(pledges.status, "active")),
-
-    // Normalise every cadence to a monthly figure so the number means one
-    // thing. A yearly pledge of ₵1,200 is ₵100/month of committed support.
-    db
-      .select({
-        total: sql<number>`coalesce(sum(
+  // One statement, not five in parallel. Each parallel query takes its own
+  // pooled connection: in dev that drained the whole pool, so a single wedged
+  // connection hung the dashboard for minutes; in production (max: 1) the
+  // five just queued behind each other anyway.
+  const [row] = await db
+    .select({
+      receivedThisMonthMinor: sql<number>`(
+        select coalesce(sum(${donations.amountMinor}), 0) from ${donations}
+        where ${donations.status} = 'succeeded' and ${donations.paidAt} >= ${monthStart.toISOString()}
+      )`.mapWith(Number),
+      giftsThisMonth: sql<number>`(
+        select count(*) from ${donations}
+        where ${donations.status} = 'succeeded' and ${donations.paidAt} >= ${monthStart.toISOString()}
+      )`.mapWith(Number),
+      receivedAllTimeMinor: sql<number>`(
+        select coalesce(sum(${donations.amountMinor}), 0) from ${donations}
+        where ${donations.status} = 'succeeded'
+      )`.mapWith(Number),
+      activePartners: sql<number>`(
+        select count(*) from ${pledges} where ${pledges.status} = 'active'
+      )`.mapWith(Number),
+      // Normalise every cadence to a monthly figure so the number means one
+      // thing. A yearly pledge of ₵1,200 is ₵100/month of committed support.
+      pledgedMonthlyMinor: sql<number>`(
+        select coalesce(sum(
           case ${pledges.cadence}
             when 'monthly' then ${pledges.amountMinor}
             when 'quarterly' then ${pledges.amountMinor} / 3
             when 'annual' then ${pledges.amountMinor} / 12
           end
-        ), 0)`.mapWith(Number),
-      })
-      .from(pledges)
-      .where(eq(pledges.status, "active")),
-
-    db
-      .select({ n: count() })
-      .from(pledgePeriods)
-      .where(eq(pledgePeriods.status, "missed")),
-  ]);
+        ), 0) from ${pledges} where ${pledges.status} = 'active'
+      )`.mapWith(Number),
+      missedPeriods: sql<number>`(
+        select count(*) from ${pledgePeriods} where ${pledgePeriods.status} = 'missed'
+      )`.mapWith(Number),
+    })
+    .from(sql`(select 1) as one`);
 
   return {
-    receivedThisMonthMinor: thisMonth[0]?.total ?? 0,
-    receivedAllTimeMinor: allTime[0]?.total ?? 0,
-    giftsThisMonth: thisMonth[0]?.gifts ?? 0,
-    activePartners: partners[0]?.n ?? 0,
-    pledgedMonthlyMinor: pledged[0]?.total ?? 0,
-    missedPeriods: missed[0]?.n ?? 0,
+    receivedThisMonthMinor: row?.receivedThisMonthMinor ?? 0,
+    receivedAllTimeMinor: row?.receivedAllTimeMinor ?? 0,
+    giftsThisMonth: row?.giftsThisMonth ?? 0,
+    activePartners: row?.activePartners ?? 0,
+    pledgedMonthlyMinor: row?.pledgedMonthlyMinor ?? 0,
+    missedPeriods: row?.missedPeriods ?? 0,
   };
 }
 
@@ -151,34 +149,22 @@ export async function getRecentDonations(limit = 25) {
     .limit(limit);
 }
 
-/** Counts for the admin sidebar, including unpublished drafts. */
+/** Counts for the admin sidebar, including unpublished drafts. One statement, for the reason given in getDashboardTotals. */
 export async function getContentCounts() {
-  const [postRows, eventRows, blockRows] = await Promise.all([
-    db
-      .select({
-        total: count(),
-        drafts: sql<number>`count(*) filter (where ${posts.isPublished} = false)`.mapWith(Number),
-      })
-      .from(posts),
-    db
-      .select({
-        total: count(),
-        drafts: sql<number>`count(*) filter (where ${events.isPublished} = false)`.mapWith(Number),
-      })
-      .from(events),
-    db
-      .select({
-        total: count(),
-        drafts: sql<number>`count(*) filter (where ${contentBlocks.isPublished} = false)`.mapWith(
-          Number,
-        ),
-      })
-      .from(contentBlocks),
-  ]);
+  const [row] = await db
+    .select({
+      postsTotal: sql<number>`(select count(*) from ${posts})`.mapWith(Number),
+      postsDrafts: sql<number>`(select count(*) from ${posts} where ${posts.isPublished} = false)`.mapWith(Number),
+      eventsTotal: sql<number>`(select count(*) from ${events})`.mapWith(Number),
+      eventsDrafts: sql<number>`(select count(*) from ${events} where ${events.isPublished} = false)`.mapWith(Number),
+      blocksTotal: sql<number>`(select count(*) from ${contentBlocks})`.mapWith(Number),
+      blocksDrafts: sql<number>`(select count(*) from ${contentBlocks} where ${contentBlocks.isPublished} = false)`.mapWith(Number),
+    })
+    .from(sql`(select 1) as one`);
 
   return {
-    posts: postRows[0] ?? { total: 0, drafts: 0 },
-    events: eventRows[0] ?? { total: 0, drafts: 0 },
-    blocks: blockRows[0] ?? { total: 0, drafts: 0 },
+    posts: { total: row?.postsTotal ?? 0, drafts: row?.postsDrafts ?? 0 },
+    events: { total: row?.eventsTotal ?? 0, drafts: row?.eventsDrafts ?? 0 },
+    blocks: { total: row?.blocksTotal ?? 0, drafts: row?.blocksDrafts ?? 0 },
   };
 }
